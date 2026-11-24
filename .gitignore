@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+
+# GameDNA runtime output. Evidence can contain screenshots of local work; export it deliberately.
+apps/*/.gamedna/evidence/*
+!apps/*/.gamedna/evidence/.gitkeep
+apps/*/.gamedna/reports/*
+!apps/*/.gamedna/reports/.gitkeep
+.gamedna-session/
+.scratch/
