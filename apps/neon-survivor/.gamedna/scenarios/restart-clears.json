@@ -1,0 +1,66 @@
+{
+  "id": "restart-clears",
+  "description": "Score some kills, then restart. Score, wave and health must return to their starting values.",
+  "seed": 7,
+  "maxTicks": 60,
+  "setup": {
+    "arena": "lab-dummies",
+    "dummies": 6,
+    "dummyHp": 1
+  },
+  "inputs": [
+    {
+      "tick": 5,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 6,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 30,
+      "key": "restart",
+      "down": true
+    },
+    {
+      "tick": 31,
+      "key": "restart",
+      "down": false
+    }
+  ],
+  "assertions": [
+    {
+      "type": "eventCount",
+      "checkId": "RESET-01",
+      "event": "score",
+      "op": "gte",
+      "value": 1
+    },
+    {
+      "type": "stateAtEnd",
+      "checkId": "RESET-01",
+      "path": "score",
+      "op": "eq",
+      "value": 0
+    },
+    {
+      "type": "stateAtEnd",
+      "checkId": "RESET-01",
+      "path": "wave.index",
+      "op": "eq",
+      "value": 1
+    },
+    {
+      "type": "stateAtEnd",
+      "checkId": "RESET-01",
+      "path": "player.health",
+      "op": "eq",
+      "value": 5
+    }
+  ],
+  "tags": [
+    "rules"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "id": "exit-open",
+  "description": "Collect the key, then reach the exit. The level must complete exactly once.",
+  "seed": 42,
+  "maxTicks": 120,
+  "setup": {
+    "level": "lab-exit-open"
+  },
+  "inputs": [
+    {
+      "tick": 2,
+      "key": "right",
+      "down": true
+    }
+  ],
+  "assertions": [
+    {
+      "type": "eventCount",
+      "checkId": "WIN-01",
+      "event": "keyCollected",
+      "op": "eq",
+      "value": 1
+    },
+    {
+      "type": "eventCount",
+      "checkId": "WIN-01",
+      "event": "levelComplete",
+      "op": "eq",
+      "value": 1
+    }
+  ],
+  "tags": [
+    "rules"
+  ]
+}

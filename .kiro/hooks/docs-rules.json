@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Docs formatting reminder",
+      "trigger": "PostFileSave",
+      "matcher": "docs/.*\\.md$",
+      "action": {
+        "type": "agent",
+        "prompt": "A file in docs/ changed. Check it against the docs/rules.md section 12 checklist: burgundy H1 with the DNA icon, H2 icons from the section 2 table, tan H3s, priority label format, at most one callout per section, a diagram with the three classes wherever the section describes steps or structure, chart numbers that match their source, and a reading key when icons or charts are used."
+      }
+    }
+  ]
+}

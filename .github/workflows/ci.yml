@@ -1,0 +1,118 @@
+name: CI
+
+# Runs on every pull request (any target branch), on pushes to main, and on demand.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: '1'
+  NO_COLOR: '1'
+
+jobs:
+  checks:
+    name: Typecheck, docs and unit tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Docs formatting rules (docs/rules.md)
+        run: npm run check:docs
+      - name: Unit, property and scenario tests
+        run: npx vitest --run --reporter=default --reporter=github-actions
+
+  build:
+    name: Build, bridge exclusion and Power bundle freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build workbench, Power bundle and both games
+        # Each game build fails if the dev-only GameDNA bridge appears in dist/.
+        run: npm run build
+      - name: Committed power/server matches the source
+        run: |
+          if ! git diff --exit-code --stat -- power/server; then
+            echo "::error title=Stale Power bundle::power/server is out of date. Run 'npm run build:workbench && npm run build:power' and commit the result."
+            exit 1
+          fi
+      - name: Upload game builds
+        uses: actions/upload-artifact@v7
+        with:
+          name: game-builds
+          path: |
+            apps/gravity-shift/dist
+            apps/neon-survivor/dist
+          retention-days: 7
+
+  e2e:
+    name: Browser end-to-end (MCP over stdio + Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install Chromium system libraries
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - name: Build
+        run: npm run build
+      - name: End-to-end tests
+        run: npx vitest --run --config vitest.e2e.config.ts --reporter=default --reporter=github-actions
+      - name: MCP latency benchmark (fails if warmed p95 >= 250 ms, PRD 10.2)
+        run: node scripts/bench-mcp.mjs > bench.json; status=$?; cat bench.json; exit $status
+      - name: Upload benchmark
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mcp-benchmark
+          path: bench.json
+          if-no-files-found: ignore
+          retention-days: 7

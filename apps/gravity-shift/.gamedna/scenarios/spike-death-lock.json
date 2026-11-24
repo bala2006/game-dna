@@ -1,0 +1,60 @@
+{
+  "id": "spike-death-lock",
+  "description": "Run into spikes, then keep pressing keys while dead. The player must not move until respawn.",
+  "seed": 42,
+  "maxTicks": 90,
+  "setup": {
+    "level": "lab-spikes"
+  },
+  "inputs": [
+    {
+      "tick": 2,
+      "key": "right",
+      "down": true
+    },
+    {
+      "tick": 50,
+      "key": "jump",
+      "down": true
+    },
+    {
+      "tick": 52,
+      "key": "jump",
+      "down": false
+    },
+    {
+      "tick": 55,
+      "key": "flip",
+      "down": true
+    },
+    {
+      "tick": 57,
+      "key": "flip",
+      "down": false
+    },
+    {
+      "tick": 60,
+      "key": "left",
+      "down": true
+    }
+  ],
+  "assertions": [
+    {
+      "type": "eventCount",
+      "checkId": "DEAD-01",
+      "event": "death",
+      "op": "gte",
+      "value": 1
+    },
+    {
+      "type": "stateAlways",
+      "checkId": "DEAD-01",
+      "path": "player.deadDrift",
+      "op": "eq",
+      "value": 0
+    }
+  ],
+  "tags": [
+    "rules"
+  ]
+}

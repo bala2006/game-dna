@@ -1,0 +1,121 @@
+import path from 'node:path';
+import {
+  GameDNAError,
+  aggregateMetrics,
+  assessReproducibility,
+  checkParameterOverrides,
+  computeMetrics,
+  resolveRunParameters,
+  runScenario,
+  type MetricRange,
+  type ParameterValues,
+  type Reproducibility,
+  type Scenario,
+  type ScenarioRun,
+} from '@gamedna/core';
+import { newId, resolveInside, writeFileAtomic, writeJsonAtomic } from '@gamedna/core/node';
+import { loadHarness } from './headless.js';
+import { EVIDENCE_DIR, type LoadedProject } from './project.js';
+import type { Session } from './session.js';
+
+export type Runtime = 'browser' | 'headless-node';
+
+export interface ExecutedScenario {
+  runtime: Runtime;
+  runs: ScenarioRun[];
+  traceId: string;
+  screenshotIds: string[];
+  metrics: MetricRange[];
+  reproducibility: Reproducibility;
+  limitations: string[];
+}
+
+interface BridgeWindow {
+  __GAMEDNA__: {
+    runScenario(s: unknown, o: unknown, opts: unknown): ScenarioRun | { ok: false; errors: string[] };
+    beginScenario(s: unknown, o: unknown, opts: unknown): { ok: boolean; errors: string[] };
+    advanceScenario(t: number): { tick: number };
+    finishScenario(): ScenarioRun | null;
+  };
+}
+
+export async function saveScreenshot(project: LoadedProject, png: Buffer): Promise<string> {
+  const id = newId('shot');
+  writeFileAtomic(resolveInside(project.root, path.posix.join(EVIDENCE_DIR, 'screenshots', `${id}.png`)), png);
+  return id;
+}
+
+async function nextFrames(session: Session): Promise<void> {
+  await session.page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))), undefined);
+}
+
+async function browserRun(session: Session, project: LoadedProject, scenario: Scenario, overrides: ParameterValues, revision: string, screenshots: boolean): Promise<{ run: ScenarioRun; shots: string[] }> {
+  const shots: string[] = [];
+  if (screenshots && scenario.checkpoints.length > 0) {
+    const begun = await session.page.evaluate(([s, o, r]) => (window as unknown as BridgeWindow).__GAMEDNA__.beginScenario(s, o, { revision: r }), [scenario, overrides, revision] as const);
+    if (!begun.ok) throw new GameDNAError('INVALID_INPUT', 'The adapter rejected the scenario', { details: { errors: begun.errors } });
+    for (const tick of [...scenario.checkpoints].sort((a, b) => a - b)) {
+      await session.page.evaluate((t) => (window as unknown as BridgeWindow).__GAMEDNA__.advanceScenario(t), tick);
+      await nextFrames(session);
+      shots.push(await saveScreenshot(project, await session.page.screenshot({ type: 'png' })));
+    }
+    const run = await session.page.evaluate(() => (window as unknown as BridgeWindow).__GAMEDNA__.finishScenario(), undefined);
+    if (!run) throw new GameDNAError('SESSION_NOT_READY', 'Scenario execution was lost (page reloaded?)');
+    return { run, shots };
+  }
+  const run = await session.page.evaluate(([s, o, r]) => (window as unknown as BridgeWindow).__GAMEDNA__.runScenario(s, o, { revision: r }), [scenario, overrides, revision] as const);
+  if ('ok' in run && run.ok === false) throw new GameDNAError('INVALID_INPUT', 'The adapter rejected the scenario', { details: { errors: run.errors } });
+  return { run: run as ScenarioRun, shots };
+}
+
+/** Run a scenario 1..10 times in the browser session or headlessly, then store the trace. */
+export async function executeScenario(args: {
+  project: LoadedProject;
+  scenario: Scenario;
+  overrides?: ParameterValues;
+  seed?: number;
+  repeat?: number;
+  session?: Session | undefined;
+  screenshots?: boolean;
+  revision: string;
+}): Promise<ExecutedScenario> {
+  const { project } = args;
+  const overrides = args.overrides ?? {};
+  const problems = checkParameterOverrides(project.record.parameters, overrides, { allowFault: true, allowProtected: true });
+  if (problems.length) throw new GameDNAError('INVALID_PARAMETER', 'Rejected parameter overrides', { details: { problems } });
+  const scenario = args.seed === undefined ? args.scenario : { ...args.scenario, seed: args.seed };
+  const repeat = Math.max(1, Math.min(args.repeat ?? 1, 10));
+  const runs: ScenarioRun[] = [];
+  const screenshotIds: string[] = [];
+  const limitations: string[] = [];
+  let runtime: Runtime;
+  if (args.session) {
+    runtime = 'browser';
+    for (let i = 0; i < repeat; i++) {
+      const { run, shots } = await browserRun(args.session, project, scenario, overrides, args.revision, Boolean(args.screenshots) && i === 0);
+      runs.push(run);
+      screenshotIds.push(...shots);
+    }
+  } else {
+    runtime = 'headless-node';
+    const make = await loadHarness(project.root, project.record);
+    const params = resolveRunParameters(project.tuning, scenario, overrides);
+    for (let i = 0; i < repeat; i++) runs.push(runScenario(make(), scenario, params, { revision: args.revision }));
+    limitations.push('Headless run: same simulation code, no Phaser rendering, audio or screenshots.');
+    if (args.screenshots) limitations.push('Screenshots need a browser session (gd_start_session).');
+  }
+  const first = runs[0] as ScenarioRun;
+  limitations.push(...first.limitations);
+  const reproducibility = assessReproducibility(runs);
+  const metrics = aggregateMetrics(runs.map((r) => computeMetrics(r, project.record.metrics)));
+  const traceId = newId('trace');
+  writeJsonAtomic(resolveInside(project.root, path.posix.join(EVIDENCE_DIR, 'traces', `${traceId}.json`)), {
+    traceId,
+    runtime,
+    repeat,
+    reproducibility: { status: reproducibility.status, note: reproducibility.note },
+    screenshotIds,
+    run: first,
+  });
+  return { runtime, runs, traceId, screenshotIds, metrics, reproducibility, limitations };
+}

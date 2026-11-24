@@ -1,0 +1,47 @@
+{
+  "id": "combat-feel",
+  "description": "Hold attack for two seconds against tough dummies; measures cadence, hit-stop and feedback timing.",
+  "seed": 7,
+  "maxTicks": 150,
+  "setup": {
+    "arena": "lab-dummies",
+    "dummies": 8,
+    "dummyHp": 999
+  },
+  "inputs": [
+    {
+      "tick": 10,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 130,
+      "key": "attack",
+      "down": false
+    }
+  ],
+  "checkpoints": [
+    11,
+    40,
+    90
+  ],
+  "assertions": [
+    {
+      "type": "minEventInterval",
+      "checkId": "CD-01",
+      "event": "attack",
+      "minMsFromParam": "attack.cooldownMs"
+    },
+    {
+      "type": "stateAlways",
+      "checkId": "HP-01",
+      "path": "player.health",
+      "op": "gte",
+      "value": 0
+    }
+  ],
+  "tags": [
+    "combat",
+    "flagship"
+  ]
+}

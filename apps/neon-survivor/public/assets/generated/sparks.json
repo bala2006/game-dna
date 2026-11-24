@@ -1,0 +1,34 @@
+{
+  "schema": "gamedna.particles/v1",
+  "kind": "impact",
+  "shape": "spark",
+  "blend": "add",
+  "count": 17,
+  "speed": {
+    "min": 120,
+    "max": 320
+  },
+  "angle": {
+    "min": 0,
+    "max": 360
+  },
+  "lifetimeMs": {
+    "min": 180,
+    "max": 420
+  },
+  "gravity": 0,
+  "scale": {
+    "start": 0.9,
+    "end": 0
+  },
+  "quantizeToPixels": false,
+  "colors": [
+    "#22e6ff",
+    "#ff2bd6",
+    "#f4f7ff"
+  ],
+  "reducedMotion": {
+    "count": 3,
+    "speedMultiplier": 0.4
+  }
+}

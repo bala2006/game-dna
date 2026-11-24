@@ -1,0 +1,40 @@
+{
+  "id": "exit-locked",
+  "description": "Walk through the exit without the key. The level must not complete.",
+  "seed": 42,
+  "maxTicks": 120,
+  "setup": {
+    "level": "lab-exit-locked"
+  },
+  "inputs": [
+    {
+      "tick": 2,
+      "key": "right",
+      "down": true
+    },
+    {
+      "tick": 60,
+      "key": "right",
+      "down": false
+    }
+  ],
+  "assertions": [
+    {
+      "type": "eventCount",
+      "checkId": "WIN-01",
+      "event": "exitLocked",
+      "op": "gte",
+      "value": 1
+    },
+    {
+      "type": "eventCount",
+      "checkId": "WIN-01",
+      "event": "levelComplete",
+      "op": "eq",
+      "value": 0
+    }
+  ],
+  "tags": [
+    "rules"
+  ]
+}

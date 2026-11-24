@@ -43,6 +43,22 @@ Every H2 section starts with one icon from the table below. Put the icon after t
 | 15. Risks and mitigation | 🚨 | What could go wrong |
 | 16. Post-hackathon roadmap | 🚀 | Later versions |
 | 17. Research references | 🔗 | Sources |
+| Prerequisites | 🧰 | Tools needed before starting |
+| Install and build | 📦 | Getting the code running |
+| Activate the Power | ⚡ | Connecting GameDNA to Kiro |
+| Run the demo games | 🕹️ | Playing the sample applications |
+| Troubleshooting | 🛠️ | Fixing common problems |
+| Provenance record | 🧾 | Where the work came from |
+| Development timeline | 🗓️ | Dated milestones |
+| Authorship statement | ✍️ | Who made the work |
+| Audit status | ☑️ | Release gate results |
+| Dependencies | 🗃️ | Packages, versions and licenses |
+| Dependency usage | 🗺️ | Where each package is used |
+| License notices | ⚖️ | Required third-party notices |
+| Bundled code | 🗜️ | Third-party code inside generated bundles |
+| Latency | ⏱️ | Measured tool response times |
+| Reproducibility | 🔁 | Repeated identical-seed runs |
+| Test coverage | 🧪 | Automated checks per area |
 
 ```markdown
 ## <span style="color:#B84D73">💡 1. Executive summary</span>

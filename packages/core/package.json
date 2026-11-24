@@ -1,0 +1,16 @@
+{
+  "name": "@gamedna/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GameDNA schemas, scenario runner, experiments, decisions and evidence (isomorphic).",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./prng": "./src/prng.ts",
+    "./node": "./src/node/index.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

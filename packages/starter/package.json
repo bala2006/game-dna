@@ -1,0 +1,18 @@
+{
+  "name": "@gamedna/starter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GameDNA lean game skeleton: fixed-step simulation base, input latch, tuning access and Phaser scene glue. Written for GameDNA; not an engine.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./phaser": "./src/phaser.ts"
+  },
+  "dependencies": {
+    "@gamedna/core": "*"
+  },
+  "peerDependencies": {
+    "phaser": "3.90.0"
+  }
+}

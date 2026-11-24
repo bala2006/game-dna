@@ -1,0 +1,38 @@
+{
+  "id": "run-stop",
+  "description": "Run right for one second, release, and measure acceleration and stopping distance.",
+  "seed": 42,
+  "maxTicks": 150,
+  "setup": {
+    "level": "lab-flat"
+  },
+  "inputs": [
+    {
+      "tick": 10,
+      "key": "right",
+      "down": true
+    },
+    {
+      "tick": 70,
+      "key": "right",
+      "down": false
+    }
+  ],
+  "checkpoints": [
+    40,
+    90
+  ],
+  "assertions": [
+    {
+      "type": "stateAlways",
+      "checkId": "MOVE-01",
+      "path": "player.jumpsSinceGround",
+      "op": "eq",
+      "value": 0
+    }
+  ],
+  "tags": [
+    "movement",
+    "flagship"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "score-once",
+  "description": "One pulse defeats six one-hit dummies. Each must score exactly once (detects seeded fault fault.duplicateDamage).",
+  "seed": 7,
+  "maxTicks": 60,
+  "setup": {
+    "arena": "lab-dummies",
+    "dummies": 6,
+    "dummyHp": 1
+  },
+  "inputs": [
+    {
+      "tick": 5,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 6,
+      "key": "attack",
+      "down": false
+    }
+  ],
+  "assertions": [
+    {
+      "type": "eventUnique",
+      "checkId": "SCORE-01",
+      "event": "score",
+      "key": "enemyId"
+    },
+    {
+      "type": "eventCount",
+      "checkId": "SCORE-01",
+      "event": "score",
+      "op": "eq",
+      "value": 6
+    }
+  ],
+  "detectsFault": "fault.duplicateDamage",
+  "tags": [
+    "rules",
+    "regression"
+  ]
+}

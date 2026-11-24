@@ -1,0 +1,1512 @@
+{
+  "id": "cooldown-mash",
+  "description": "Mash the attack key every other tick next to durable dummies. Attacks must stay at least one cooldown apart.",
+  "seed": 7,
+  "maxTicks": 310,
+  "setup": {
+    "arena": "lab-dummies",
+    "dummies": 8,
+    "dummyHp": 999
+  },
+  "inputs": [
+    {
+      "tick": 5,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 6,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 7,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 8,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 9,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 10,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 11,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 12,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 13,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 14,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 15,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 16,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 17,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 18,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 19,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 20,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 21,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 22,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 23,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 24,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 25,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 26,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 27,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 28,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 29,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 30,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 31,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 32,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 33,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 34,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 35,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 36,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 37,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 38,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 39,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 40,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 41,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 42,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 43,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 44,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 45,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 46,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 47,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 48,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 49,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 50,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 51,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 52,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 53,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 54,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 55,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 56,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 57,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 58,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 59,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 60,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 61,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 62,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 63,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 64,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 65,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 66,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 67,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 68,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 69,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 70,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 71,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 72,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 73,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 74,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 75,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 76,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 77,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 78,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 79,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 80,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 81,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 82,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 83,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 84,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 85,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 86,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 87,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 88,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 89,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 90,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 91,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 92,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 93,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 94,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 95,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 96,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 97,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 98,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 99,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 100,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 101,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 102,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 103,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 104,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 105,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 106,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 107,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 108,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 109,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 110,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 111,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 112,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 113,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 114,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 115,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 116,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 117,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 118,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 119,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 120,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 121,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 122,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 123,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 124,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 125,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 126,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 127,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 128,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 129,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 130,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 131,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 132,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 133,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 134,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 135,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 136,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 137,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 138,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 139,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 140,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 141,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 142,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 143,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 144,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 145,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 146,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 147,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 148,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 149,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 150,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 151,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 152,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 153,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 154,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 155,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 156,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 157,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 158,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 159,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 160,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 161,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 162,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 163,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 164,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 165,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 166,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 167,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 168,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 169,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 170,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 171,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 172,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 173,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 174,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 175,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 176,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 177,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 178,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 179,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 180,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 181,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 182,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 183,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 184,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 185,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 186,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 187,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 188,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 189,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 190,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 191,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 192,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 193,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 194,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 195,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 196,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 197,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 198,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 199,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 200,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 201,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 202,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 203,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 204,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 205,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 206,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 207,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 208,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 209,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 210,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 211,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 212,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 213,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 214,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 215,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 216,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 217,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 218,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 219,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 220,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 221,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 222,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 223,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 224,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 225,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 226,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 227,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 228,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 229,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 230,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 231,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 232,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 233,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 234,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 235,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 236,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 237,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 238,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 239,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 240,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 241,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 242,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 243,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 244,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 245,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 246,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 247,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 248,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 249,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 250,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 251,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 252,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 253,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 254,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 255,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 256,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 257,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 258,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 259,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 260,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 261,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 262,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 263,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 264,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 265,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 266,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 267,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 268,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 269,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 270,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 271,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 272,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 273,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 274,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 275,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 276,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 277,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 278,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 279,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 280,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 281,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 282,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 283,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 284,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 285,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 286,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 287,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 288,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 289,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 290,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 291,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 292,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 293,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 294,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 295,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 296,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 297,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 298,
+      "key": "attack",
+      "down": false
+    },
+    {
+      "tick": 299,
+      "key": "attack",
+      "down": true
+    },
+    {
+      "tick": 300,
+      "key": "attack",
+      "down": false
+    }
+  ],
+  "assertions": [
+    {
+      "type": "eventCount",
+      "checkId": "CD-01",
+      "event": "attack",
+      "op": "gte",
+      "value": 2
+    },
+    {
+      "type": "minEventInterval",
+      "checkId": "CD-01",
+      "event": "attack",
+      "minMsFromParam": "attack.cooldownMs"
+    }
+  ],
+  "tags": [
+    "rules",
+    "combat"
+  ]
+}

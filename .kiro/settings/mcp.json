@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "gamedna": {
+      "command": "node",
+      "args": ["power/server/gamedna-mcp.mjs"],
+      "disabled": false,
+      "autoApprove": ["gd_project_status", "gd_get_style_pack", "gd_validate_design", "gd_get_selection"]
+    }
+  }
+}

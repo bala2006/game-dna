@@ -1,0 +1,49 @@
+{
+  "id": "jump-arc",
+  "description": "Single full-height jump on flat ground; measures apex, time to apex and airtime.",
+  "seed": 42,
+  "maxTicks": 120,
+  "setup": {
+    "level": "lab-flat"
+  },
+  "inputs": [
+    {
+      "tick": 20,
+      "key": "jump",
+      "down": true
+    },
+    {
+      "tick": 90,
+      "key": "jump",
+      "down": false
+    }
+  ],
+  "checkpoints": [
+    20,
+    40,
+    60
+  ],
+  "assertions": [
+    {
+      "type": "eventCount",
+      "checkId": "MOVE-01",
+      "event": "jump",
+      "op": "eq",
+      "value": 1
+    },
+    {
+      "type": "eventCount",
+      "checkId": "MOVE-01",
+      "event": "jump",
+      "where": {
+        "extraAirJump": true
+      },
+      "op": "eq",
+      "value": 0
+    }
+  ],
+  "tags": [
+    "movement",
+    "flagship"
+  ]
+}
