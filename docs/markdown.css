@@ -1,0 +1,42 @@
+/* Shared preview styles for every Markdown file in this workspace.
+   Loaded by the markdown.styles setting in .vscode/settings.json.
+   Colors follow docs/rules.md. */
+
+h1,
+h2 {
+  color: #B84D73;
+}
+
+h3 {
+  color: #9A7B5F;
+}
+
+h1,
+h2 {
+  border-bottom: 1px solid rgba(154, 123, 95, 0.35);
+  padding-bottom: 0.3em;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid rgba(154, 123, 95, 0.4);
+  padding: 6px 10px;
+}
+
+th {
+  background: #FAF7F2;
+}
+
+body.vscode-dark th {
+  background: #2a2a2a;
+}
+
+blockquote {
+  border-left: 4px solid #B84D73;
+  padding: 0 1em;
+  margin-left: 0;
+}
