@@ -11,6 +11,7 @@ import { preview } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const root = path.resolve(import.meta.dirname, '../..');
+mkdirSync(path.join(root, '.scratch'), { recursive: true }); // git-ignored; absent on fresh clones
 const work = mkdtempSync(path.join(root, '.scratch', 'e2e-'));
 const game = path.join(work, 'gravity-shift');
 const rel = path.relative(root, game);
@@ -27,7 +28,6 @@ async function call(name: string, args: Json): Promise<{ data: Json; images: num
 }
 
 beforeAll(async () => {
-  mkdirSync(path.dirname(work), { recursive: true });
   cpSync(path.join(root, 'apps/gravity-shift'), game, { recursive: true, filter: (src) => !/node_modules|[\\/]dist([\\/]|$)|\.gamedna[\\/](evidence|experiments|reports)[\\/]./.test(src) });
   const pkg = JSON.parse(readFileSync(path.join(game, 'package.json'), 'utf8'));
   pkg.scripts.dev = `vite --host 127.0.0.1 --port ${PORT} --strictPort`;
