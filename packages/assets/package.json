@@ -1,0 +1,15 @@
+{
+  "name": "@gamedna/assets",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GameDNA style packs, deterministic procedural asset generators and validation.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts"
+  },
+  "dependencies": {
+    "@gamedna/core": "*"
+  }
+}
