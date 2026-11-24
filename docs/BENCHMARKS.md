@@ -68,17 +68,25 @@ The simulations are fixed-step with seeded random numbers, so exact equality is 
 | MCP tools | 13 | Engine detection, command allowlist, path restrictions, headless runs, seeded fault detection, full experiment loop, stale baseline, report, workbench security |
 | Gravity Shift | 13 | Scenarios, seeded fault, reproducibility, metric response, fast-check properties for MOVE-01, DEAD-01 and RESET-01 |
 | Neon Survivor | 11 | Scenarios, seeded fault, reproducibility, metric response, fast-check properties for CD-01, SCORE-01, HP-01 and RESET-01 |
+| Phaser adapter | 9 | URL overrides, allowlist rejection, in-page scenarios equal headless runs, checkpoints, bounded stepping, event paging |
+| Starter | 7 | Input edges, fixed-step clock cap, tuning helpers, seeded determinism |
+| Scripts | 5 | Production bridge check, license copy, docs rules checker |
 
-The pie chart below shows the share of the 92 automated tests in each area, from the table above.
+The pie chart below shows the share of the 113 unit, property and scenario tests in each area, from the table above.
 
 ```mermaid
 pie showData
-  title "Automated tests by area, 92 total"
+  title "Automated tests by area, 113 total"
   "Core" : 30
   "Assets" : 25
   "MCP tools" : 13
   "Gravity Shift" : 13
   "Neon Survivor" : 11
+  "Phaser adapter" : 9
+  "Starter" : 7
+  "Scripts" : 5
 ```
+
+`npm run test:e2e` adds 7 browser end-to-end tests: the bundled server over stdio, a real dev server and Chromium, a workbench click that records the choice, a verified decision, and both production builds loading without the bridge. CI runs all of them on every pull request (`.github/workflows/ci.yml`).
 
 Not yet measured: the controlled comparison against ordinary Kiro (PRD 10.3), the user pilot and clean installs on a second machine.

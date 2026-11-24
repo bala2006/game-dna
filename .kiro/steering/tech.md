@@ -12,4 +12,5 @@ Chosen for speed, low latency and reliability; the comparison with Rust, Go, Pyt
 - Game rules go in deterministic fixed-step simulation classes. No `Math.random()` or wall-clock time in rules; use the seeded `rng`.
 - MCP server: stdout is protocol only; log to stderr. No generic shell tool. Only `package.json` scripts named in `.gamedna/project.json` may run. All paths go through `resolveInside`.
 - Errors use the typed codes in `packages/core/src/errors.ts`. A tool failure is never reported as a passing check.
-- Commands: `npm test`, `npm run typecheck`, `npm run build`, `npm run bench:mcp`.
+- Commands: `npm test`, `npm run test:e2e`, `npm run typecheck`, `npm run check:docs`, `npm run build`, `npm run bench:mcp`.
+- CI (`.github/workflows/ci.yml`) runs typecheck, docs check, unit tests on Node 22 and 24, the build with bridge and bundle-freshness checks, browser end-to-end tests and the latency benchmark on every pull request. Keep it green; add tests next to new code.

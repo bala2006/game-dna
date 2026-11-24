@@ -30,7 +30,9 @@ Requirements: `requirements.md`. Design: `design.md`. Checked items are implemen
 - [x] 13. Bounded regression hook (`scripts/regression-hook.mjs`, `.kiro/hooks/regression.json`) (Req 9.3)
 - [x] 14. Docs: install, originality, dependency inventory, third-party notices, benchmarks (Req 4.3)
 - [x] 15. End-to-end check through the bundled server over stdio: session, observe, browser scenario with screenshots, experiment, workbench selection, prepare, apply, verify, report (verified manually on 24 Nov 2026; see `docs/BENCHMARKS.md`)
-- [ ] 16. Flagship experiments in each game with a real user choice, recorded in `.gamedna/decisions.json`
-- [ ] 17. Clean-install check on a second machine and in Kiro IDE Powers panel (PRD 10.2)
-- [ ] 18. Controlled comparison against ordinary Kiro and small user pilot (PRD 10.3)
-- [ ] 19. Public game builds, demo video, entrant originality review and Devpost submission (PRD 14.3)
+- [x] 16. GitHub Actions CI on every pull request: typecheck, docs rules checker, unit tests on Node 22 and 24, build with bridge and Power-bundle freshness checks, browser end-to-end tests and the latency gate (Req 9.3, 9.4)
+- [x] 17. Tests for the starter, the dev bridge and the repository scripts; browser end-to-end suite in `tests/e2e/`
+- [ ] 18. Flagship experiments in each game with a real user choice, recorded in `.gamedna/decisions.json`
+- [ ] 19. Clean-install check on a second machine and in Kiro IDE Powers panel (PRD 10.2)
+- [ ] 20. Controlled comparison against ordinary Kiro and small user pilot (PRD 10.3)
+- [ ] 21. Public game builds, demo video, entrant originality review and Devpost submission (PRD 14.3)

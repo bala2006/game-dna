@@ -50,6 +50,8 @@ npm test
 npm run build
 ```
 
+Optional: `npm run test:e2e` runs the browser end-to-end tests after `npm run build`.
+
 `npm run build` builds the workbench, bundles the MCP server into `power/server/gamedna-mcp.mjs`, builds both games and checks that the development bridge is absent from each production build.
 
 ## <span style="color:#B84D73">⚡ 3. Activate the Power in Kiro</span>

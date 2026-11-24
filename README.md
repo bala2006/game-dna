@@ -1,5 +1,7 @@
 # GameDNA
 
+[![CI](https://github.com/bala2006/game-dna/actions/workflows/ci.yml/badge.svg)](https://github.com/bala2006/game-dna/actions/workflows/ci.yml)
+
 GameDNA turns Kiro into a specialist game developer for Phaser games. It is a Kiro Power with a local MCP server that gives Kiro game-design skills, procedural art and sound, the ability to watch and replay a running game, and playable A/B/C experiments where **you** choose the result. Kiro then applies your choice to normal game source and verifies that the game's protected rules still hold.
 
 Built for **Kiroween 2026** (Skeleton Crew category): two different games, `apps/gravity-shift` and `apps/neon-survivor`, built on one shared starter, `packages/starter`.
@@ -43,7 +45,8 @@ flowchart TD
 ```bash
 npm install
 npx playwright install chromium
-npm test            # 92 tests
+npm test            # 113 unit, property and scenario tests
+npm run test:e2e    # 7 browser end-to-end tests (after npm run build)
 npm run build       # workbench, Power bundle, both games, bridge check
 npm run dev -w gravity-shift   # http://127.0.0.1:5173
 npm run dev -w neon-survivor   # http://127.0.0.1:5174
@@ -58,6 +61,16 @@ Open the folder in Kiro: `.kiro/settings/mcp.json` starts the GameDNA server. Th
 - **One browser round trip per scenario.** The adapter runs all ticks in the page.
 - **You stay in control.** Experiments never touch your files. Only a recorded user choice can be applied, and a changed baseline makes the choice stale.
 - **Honest results.** Every check reports passed, failed, not tested, unsupported or unstable. A tool failure is never a pass.
+
+## Continuous integration
+
+Every pull request runs `.github/workflows/ci.yml`:
+
+| Job | What it checks |
+|---|---|
+| Typecheck, docs and unit tests (Node 22 and 24) | `tsc`, the `docs/rules.md` checker, 113 Vitest and fast-check tests |
+| Build | Workbench, Power bundle and both games; fails if the dev bridge reaches `dist/` or if the committed `power/server/` is stale |
+| Browser end-to-end | Bundled MCP server over stdio, real dev server and Chromium, workbench choice, verified decision, production builds; then the MCP latency benchmark (fails if warmed p95 reaches 250 ms) |
 
 ## Kiro usage
 
