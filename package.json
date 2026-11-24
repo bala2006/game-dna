@@ -22,7 +22,10 @@
     "test": "vitest --run",
     "check:prod-bridge": "node scripts/check-prod-bridge.mjs apps/gravity-shift/dist apps/neon-survivor/dist",
     "regression": "node scripts/regression-hook.mjs",
-    "bench:mcp": "node scripts/bench-mcp.mjs"
+    "bench:mcp": "node scripts/bench-mcp.mjs",
+    "test:e2e": "vitest --run --config vitest.e2e.config.ts",
+    "check:docs": "node scripts/check-docs.mjs",
+    "check:power": "npm run build:workbench && npm run build:power && git diff --exit-code -- power/server"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

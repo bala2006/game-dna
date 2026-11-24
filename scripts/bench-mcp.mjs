@@ -44,4 +44,5 @@ const report = {
   pass: results.slice(0, 2).every((r) => r.p95Ms < 250),
 };
 console.log(JSON.stringify(report, null, 2));
+if (!report.pass) process.exitCode = 1;
 // Note: headless gd_run_scenario writes a trace file per call under apps/gravity-shift/.gamedna/evidence (git-ignored).

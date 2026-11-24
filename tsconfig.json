@@ -3,8 +3,15 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": ["node", "vite/client"],
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "node",
+      "vite/client"
+    ],
     "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -25,6 +32,8 @@
     "apps/*/scripts/**/*.ts",
     "apps/*/vite.config.ts",
     "packages/workbench/vite.config.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "tests/**/*.ts",
+    "vitest.e2e.config.ts"
   ]
 }
