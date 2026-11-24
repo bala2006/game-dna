@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Game regression checks",
+      "trigger": "PostTaskExec",
+      "action": { "type": "command", "command": "npm test --silent", "timeout": 120 }
+    }
+  ]
+}

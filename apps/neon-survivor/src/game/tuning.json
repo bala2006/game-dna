@@ -1,0 +1,18 @@
+{
+  "movement.maxSpeed": 260,
+  "movement.acceleration": 2400,
+  "movement.deceleration": 2600,
+  "attack.cooldownMs": 320,
+  "attack.radius": 84,
+  "attack.damage": 1,
+  "feedback.hitStopMs": 40,
+  "feedback.knockback": 260,
+  "feedback.flashMs": 80,
+  "feedback.shakePx": 4,
+  "feedback.particles": 8,
+  "enemy.speedScale": 1,
+  "rules.playerMaxHealth": 5,
+  "rules.waves": 5,
+  "rules.invulnerabilityMs": 700,
+  "fault.duplicateDamage": false
+}

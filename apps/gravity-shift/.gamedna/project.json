@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "projectId": "gravity-shift",
+  "name": "Gravity Shift",
+  "engine": {
+    "id": "phaser",
+    "version": "resolved-from-lockfile"
+  },
+  "design": {
+    "genre": "puzzle-platformer",
+    "coreLoop": "Explore, reverse gravity, collect keys, reach the exit",
+    "stylePack": "layered-minimal",
+    "experienceGoals": [
+      "responsive",
+      "readable",
+      "forgiving",
+      "calm"
+    ]
+  },
+  "requirementsFile": ".kiro/specs/game/requirements.md",
+  "tuningFile": "src/game/tuning.json",
+  "harness": {
+    "module": "src/game/sim.ts",
+    "export": "GravityShiftSim"
+  },
+  "viewport": {
+    "width": 960,
+    "height": 540
+  },
+  "constraints": [
+    {
+      "id": "MOVE-01",
+      "requirementRef": "REQ-2",
+      "statement": "A normal jump cannot be repeated in midair"
+    },
+    {
+      "id": "DEAD-01",
+      "requirementRef": "REQ-3",
+      "statement": "No input moves the player while dead"
+    },
+    {
+      "id": "RESET-01",
+      "requirementRef": "REQ-4",
+      "statement": "Restart returns the level to its initial state"
+    },
+    {
+      "id": "WIN-01",
+      "requirementRef": "REQ-5",
+      "statement": "Reaching the exit ends the level only when all keys are held"
+    }
+  ],
+  "parameters": {
+    "movement.maxSpeed": {
+      "type": "number",
+      "unit": "px/s",
+      "min": 150,
+      "max": 320,
+      "group": "movement",
+      "description": "Top horizontal run speed"
+    },
+    "movement.acceleration": {
+      "type": "number",
+      "unit": "px/s2",
+      "min": 600,
+      "max": 4000,
+      "group": "movement",
+      "description": "Ground acceleration toward top speed"
+    },
+    "movement.deceleration": {
+      "type": "number",
+      "unit": "px/s2",
+      "min": 600,
+      "max": 5000,
+      "group": "movement",
+      "description": "Ground braking when no direction is held"
+    },
+    "movement.airControl": {
+      "type": "number",
+      "unit": "ratio",
+      "min": 0.3,
+      "max": 1,
+      "group": "movement",
+      "description": "Multiplier on acceleration while airborne"
+    },
+    "movement.jumpVelocity": {
+      "type": "number",
+      "unit": "px/s",
+      "min": 300,
+      "max": 700,
+      "group": "movement",
+      "description": "Initial jump speed against gravity"
+    },
+    "movement.gravity": {
+      "type": "number",
+      "unit": "px/s2",
+      "min": 800,
+      "max": 3000,
+      "group": "movement",
+      "description": "Gravity magnitude"
+    },
+    "movement.maxFallSpeed": {
+      "type": "number",
+      "unit": "px/s",
+      "min": 400,
+      "max": 1200,
+      "group": "movement",
+      "description": "Terminal fall speed"
+    },
+    "movement.coyoteTimeMs": {
+      "type": "number",
+      "unit": "ms",
+      "min": 0,
+      "max": 150,
+      "group": "movement",
+      "description": "Grace period to jump after walking off a ledge"
+    },
+    "movement.jumpBufferMs": {
+      "type": "number",
+      "unit": "ms",
+      "min": 0,
+      "max": 200,
+      "group": "movement",
+      "description": "How early a jump press is remembered before landing"
+    },
+    "movement.jumpCutMultiplier": {
+      "type": "number",
+      "unit": "ratio",
+      "min": 0.2,
+      "max": 1,
+      "group": "movement",
+      "description": "Upward speed kept when jump is released early (variable jump height)"
+    },
+    "feedback.landSquash": {
+      "type": "number",
+      "unit": "ratio",
+      "min": 0,
+      "max": 0.4,
+      "group": "feedback",
+      "description": "Squash amount on landing"
+    },
+    "feedback.dustParticles": {
+      "type": "number",
+      "unit": "count",
+      "min": 0,
+      "max": 20,
+      "group": "feedback",
+      "description": "Dust motes on jump and land"
+    },
+    "feedback.landShakePx": {
+      "type": "number",
+      "unit": "px",
+      "min": 0,
+      "max": 4,
+      "group": "feedback",
+      "description": "Camera shake on hard landings (off with reduced motion)"
+    },
+    "rules.respawnDelayMs": {
+      "type": "number",
+      "unit": "ms",
+      "min": 200,
+      "max": 2000,
+      "protected": true,
+      "group": "rules",
+      "description": "Delay before respawn after death"
+    },
+    "fault.coyoteAfterJump": {
+      "type": "boolean",
+      "fault": true,
+      "group": "fault",
+      "description": "SEEDED FAULT for demos: grants coyote time after a jump, allowing a second midair jump"
+    }
+  },
+  "commands": {
+    "dev": {
+      "script": "dev",
+      "kind": "dev",
+      "url": "http://127.0.0.1:5173/",
+      "readyTimeoutMs": 30000
+    },
+    "test": {
+      "script": "test",
+      "kind": "test",
+      "timeoutMs": 120000
+    },
+    "build": {
+      "script": "build",
+      "kind": "build",
+      "timeoutMs": 180000
+    }
+  },
+  "metrics": [
+    {
+      "family": "movement",
+      "x": "player.x",
+      "y": "player.y",
+      "vx": "player.vx",
+      "gravitySign": "player.gravitySign",
+      "jumpEvent": "jump",
+      "landEvent": "land",
+      "moveKey": "right"
+    }
+  ]
+}

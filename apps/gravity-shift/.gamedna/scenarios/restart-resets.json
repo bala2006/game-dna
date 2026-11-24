@@ -1,0 +1,57 @@
+{
+  "id": "restart-resets",
+  "description": "Collect the far key, then restart. Keys and position must return to the initial state.",
+  "seed": 42,
+  "maxTicks": 260,
+  "setup": {
+    "level": "lab-exit-locked"
+  },
+  "inputs": [
+    {
+      "tick": 2,
+      "key": "right",
+      "down": true
+    },
+    {
+      "tick": 220,
+      "key": "right",
+      "down": false
+    },
+    {
+      "tick": 240,
+      "key": "restart",
+      "down": true
+    },
+    {
+      "tick": 242,
+      "key": "restart",
+      "down": false
+    }
+  ],
+  "assertions": [
+    {
+      "type": "eventCount",
+      "checkId": "RESET-01",
+      "event": "keyCollected",
+      "op": "eq",
+      "value": 1
+    },
+    {
+      "type": "stateAtEnd",
+      "checkId": "RESET-01",
+      "path": "keys.collected",
+      "op": "eq",
+      "value": 0
+    },
+    {
+      "type": "stateAtEnd",
+      "checkId": "RESET-01",
+      "path": "player.atSpawn",
+      "op": "eq",
+      "value": true
+    }
+  ],
+  "tags": [
+    "rules"
+  ]
+}

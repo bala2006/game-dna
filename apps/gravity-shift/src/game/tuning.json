@@ -1,0 +1,17 @@
+{
+  "movement.maxSpeed": 240,
+  "movement.acceleration": 1800,
+  "movement.deceleration": 2200,
+  "movement.airControl": 0.8,
+  "movement.jumpVelocity": 520,
+  "movement.gravity": 1500,
+  "movement.maxFallSpeed": 720,
+  "movement.coyoteTimeMs": 80,
+  "movement.jumpBufferMs": 100,
+  "movement.jumpCutMultiplier": 0.45,
+  "feedback.landSquash": 0.18,
+  "feedback.dustParticles": 6,
+  "feedback.landShakePx": 0,
+  "rules.respawnDelayMs": 600,
+  "fault.coyoteAfterJump": false
+}

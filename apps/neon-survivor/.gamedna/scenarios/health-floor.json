@@ -1,0 +1,31 @@
+{
+  "id": "health-floor",
+  "description": "Stand still in a swarm until defeated. Health must never drop below zero.",
+  "seed": 7,
+  "maxTicks": 1500,
+  "sampleEvery": 1,
+  "setup": {
+    "arena": "lab-swarm",
+    "swarm": 18
+  },
+  "inputs": [],
+  "assertions": [
+    {
+      "type": "eventCount",
+      "checkId": "HP-01",
+      "event": "gameOver",
+      "op": "eq",
+      "value": 1
+    },
+    {
+      "type": "stateAlways",
+      "checkId": "HP-01",
+      "path": "player.health",
+      "op": "gte",
+      "value": 0
+    }
+  ],
+  "tags": [
+    "rules"
+  ]
+}

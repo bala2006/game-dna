@@ -1,0 +1,26 @@
+{
+  "name": "gravity-shift",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gravity Shift: an atmospheric gravity-reversing puzzle platformer built with GameDNA.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "build": "vite build && node ../../scripts/copy-licenses.mjs dist phaser && node ../../scripts/check-prod-bridge.mjs dist",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "test": "vitest --run --root . --dir tests",
+    "assets": "tsx scripts/generate-assets.ts"
+  },
+  "dependencies": {
+    "@gamedna/core": "*",
+    "@gamedna/starter": "*",
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "@gamedna/assets": "*",
+    "@gamedna/phaser-adapter": "*",
+    "playwright": "1.65.1",
+    "vite": "7.3.8"
+  }
+}

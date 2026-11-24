@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "projectId": "neon-survivor",
+  "name": "Neon Survivor",
+  "engine": {
+    "id": "phaser",
+    "version": "resolved-from-lockfile"
+  },
+  "design": {
+    "genre": "top-down-survival-arcade",
+    "coreLoop": "Move, evade, pulse-attack enemies, survive escalating waves",
+    "stylePack": "neon-arcade",
+    "experienceGoals": [
+      "punchy",
+      "readable",
+      "fair",
+      "fast"
+    ]
+  },
+  "requirementsFile": ".kiro/specs/game/requirements.md",
+  "tuningFile": "src/game/tuning.json",
+  "harness": {
+    "module": "src/game/sim.ts",
+    "export": "NeonSurvivorSim"
+  },
+  "viewport": {
+    "width": 960,
+    "height": 540
+  },
+  "constraints": [
+    {
+      "id": "CD-01",
+      "requirementRef": "REQ-2",
+      "statement": "The attack cooldown cannot be bypassed"
+    },
+    {
+      "id": "SCORE-01",
+      "requirementRef": "REQ-3",
+      "statement": "A defeated enemy scores exactly once"
+    },
+    {
+      "id": "HP-01",
+      "requirementRef": "REQ-4",
+      "statement": "Player health never becomes negative"
+    },
+    {
+      "id": "RESET-01",
+      "requirementRef": "REQ-5",
+      "statement": "Restart clears score, wave, health and enemies"
+    }
+  ],
+  "parameters": {
+    "movement.maxSpeed": {
+      "type": "number",
+      "unit": "px/s",
+      "min": 160,
+      "max": 380,
+      "group": "movement",
+      "description": "Top movement speed"
+    },
+    "movement.acceleration": {
+      "type": "number",
+      "unit": "px/s2",
+      "min": 800,
+      "max": 5000,
+      "group": "movement",
+      "description": "Acceleration toward the held direction"
+    },
+    "movement.deceleration": {
+      "type": "number",
+      "unit": "px/s2",
+      "min": 800,
+      "max": 6000,
+      "group": "movement",
+      "description": "Braking with no direction held"
+    },
+    "attack.cooldownMs": {
+      "type": "number",
+      "unit": "ms",
+      "min": 150,
+      "max": 800,
+      "group": "combat",
+      "description": "Minimum time between pulse attacks"
+    },
+    "attack.radius": {
+      "type": "number",
+      "unit": "px",
+      "min": 50,
+      "max": 140,
+      "group": "combat",
+      "description": "Pulse reach from the player center"
+    },
+    "attack.damage": {
+      "type": "number",
+      "unit": "hp",
+      "min": 1,
+      "max": 3,
+      "protected": true,
+      "group": "combat",
+      "description": "Damage per pulse hit"
+    },
+    "feedback.hitStopMs": {
+      "type": "number",
+      "unit": "ms",
+      "min": 0,
+      "max": 150,
+      "group": "feedback",
+      "description": "World freeze after a pulse lands"
+    },
+    "feedback.knockback": {
+      "type": "number",
+      "unit": "px/s",
+      "min": 0,
+      "max": 700,
+      "group": "feedback",
+      "description": "Impulse pushing hit enemies away"
+    },
+    "feedback.flashMs": {
+      "type": "number",
+      "unit": "ms",
+      "min": 0,
+      "max": 200,
+      "group": "feedback",
+      "description": "White flash duration on hit enemies"
+    },
+    "feedback.shakePx": {
+      "type": "number",
+      "unit": "px",
+      "min": 0,
+      "max": 12,
+      "group": "feedback",
+      "description": "Camera shake amplitude on hit (disabled by reduced motion)"
+    },
+    "feedback.particles": {
+      "type": "number",
+      "unit": "count",
+      "min": 0,
+      "max": 30,
+      "group": "feedback",
+      "description": "Sparks per hit"
+    },
+    "enemy.speedScale": {
+      "type": "number",
+      "unit": "ratio",
+      "min": 0.5,
+      "max": 1.5,
+      "group": "difficulty",
+      "description": "Multiplier on enemy speeds"
+    },
+    "rules.playerMaxHealth": {
+      "type": "number",
+      "unit": "hp",
+      "min": 1,
+      "max": 10,
+      "protected": true,
+      "group": "rules",
+      "description": "Starting and maximum health"
+    },
+    "rules.waves": {
+      "type": "number",
+      "unit": "count",
+      "min": 1,
+      "max": 10,
+      "protected": true,
+      "group": "rules",
+      "description": "Waves to survive for victory"
+    },
+    "rules.invulnerabilityMs": {
+      "type": "number",
+      "unit": "ms",
+      "min": 100,
+      "max": 2000,
+      "protected": true,
+      "group": "rules",
+      "description": "Invulnerability after taking damage"
+    },
+    "fault.duplicateDamage": {
+      "type": "boolean",
+      "fault": true,
+      "group": "fault",
+      "description": "SEEDED FAULT for demos: delivers each damage event twice and drops the kill guard, so a kill scores twice"
+    }
+  },
+  "commands": {
+    "dev": {
+      "script": "dev",
+      "kind": "dev",
+      "url": "http://127.0.0.1:5174/",
+      "readyTimeoutMs": 30000
+    },
+    "test": {
+      "script": "test",
+      "kind": "test",
+      "timeoutMs": 120000
+    },
+    "build": {
+      "script": "build",
+      "kind": "build",
+      "timeoutMs": 180000
+    }
+  },
+  "metrics": [
+    {
+      "family": "combat",
+      "attackEvent": "attack",
+      "hitEvent": "hit",
+      "feedbackEvents": [
+        "hitstop",
+        "knockback",
+        "flash",
+        "shake"
+      ],
+      "hitstopField": "world.hitstop"
+    }
+  ]
+}
