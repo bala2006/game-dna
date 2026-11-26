@@ -4,6 +4,7 @@
 // Visual checks (diagram renders, text unchanged after restyling) still need a human.
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(import.meta.dirname, '..');
 const docsDir = path.join(root, process.argv[2] ?? 'docs');
@@ -103,7 +104,7 @@ export function checkDoc(file, text, icons, { isRulesFile = false } = {}) {
   return problems;
 }
 
-const isMain = import.meta.url === `file://${process.argv[1]}`;
+const isMain = import.meta.url === pathToFileURL(process.argv[1] ?? '').href;
 if (isMain) {
   const icons = allowedIcons(readFileSync(RULES, 'utf8'));
   const files = readdirSync(docsDir).filter((f) => f.endsWith('.md')).map((f) => path.join(docsDir, f));
