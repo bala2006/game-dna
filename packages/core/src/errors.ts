@@ -13,6 +13,8 @@ export const ERROR_CODES = [
   'INVALID_TRANSITION',
   'NOT_FOUND',
   'LIMIT_EXCEEDED',
+  /** An engine adapter answered a bridge request with an error; its own code is in `details.adapterCode`. */
+  'ADAPTER_ERROR',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
