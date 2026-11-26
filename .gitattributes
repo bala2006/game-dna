@@ -1,0 +1,4 @@
+# LF everywhere, so a Windows checkout builds the same power/server bundle as CI on Linux.
+* text=auto eol=lf
+*.png binary
+*.wav binary
