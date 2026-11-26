@@ -1,0 +1,28 @@
+{
+  "name": "@gamedna/kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GameDNA Kit: the reusable foundation for browser games. Seeded randomness, fixed-step loop, input for every device, camera views, vehicles, characters, terrain and a three.js stage. Written for GameDNA; not an engine.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./random": "./src/random.ts",
+    "./loop": "./src/loop.ts",
+    "./input": "./src/input.ts",
+    "./camera": "./src/camera.ts",
+    "./vehicle": "./src/vehicle.ts",
+    "./character": "./src/character.ts",
+    "./world": "./src/world.ts",
+    "./stage": "./src/stage.ts"
+  },
+  "peerDependencies": {
+    "three": "0.170.0"
+  },
+  "peerDependenciesMeta": {
+    "three": { "optional": true }
+  },
+  "devDependencies": {
+    "three": "0.170.0"
+  }
+}

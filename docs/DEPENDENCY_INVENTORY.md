@@ -25,9 +25,10 @@ Reading key for this document:
 | `typescript` | 5.9.3 | Type checking | Apache-2.0 | https://github.com/microsoft/TypeScript | Development only |
 | `esbuild` | 0.28.2 | Bundles the MCP server | MIT | https://github.com/evanw/esbuild | Development only |
 | `tsx` | 4.23.15 | Runs TypeScript asset scripts | MIT | https://github.com/privatenumber/tsx | Development only |
-| `@types/node`, `@types/react`, `@types/react-dom` | 22.20.5, 19.3.0, 19.3.0 | Type definitions | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped | Development only |
+| `three` | 0.170.0 | 3D rendering for the GameDNA Kit and its two apps | MIT | https://github.com/mrdoob/three.js | Builds of `apps/ridgeline-racer` and `apps/trail-walk`; a peer dependency of `packages/kit` |
+| `@types/node`, `@types/react`, `@types/react-dom`, `@types/three` | 22.20.5, 19.3.0, 19.3.0, 0.170.0 | Type definitions | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped | Development only |
 
-A scan of `node_modules` on 24 November 2026 found 205 installed packages under these licenses: MIT 182, ISC 13, Apache-2.0 5, BSD-3-Clause 3, BSD-2-Clause 1, CC-BY-4.0 1. The CC-BY-4.0 package is `caniuse-lite`, a browser data table used only by build tooling. None of these packages is a game template, sample game or existing MCP server.
+A scan of `node_modules` on 25 November 2026, skipping the workspace links, found 205 third-party packages under these licenses: MIT 181, ISC 13, Apache-2.0 5, BSD-3-Clause 4, BSD-2-Clause 1, CC-BY-4.0 1. The CC-BY-4.0 package is `caniuse-lite`, a browser data table used only by build tooling. None of these packages is a game template, sample game or existing MCP server.
 
 No fonts, images, audio or art packs are installed. Games use system fonts and GameDNA-generated assets.
 
@@ -46,12 +47,15 @@ flowchart TD
   GS["apps/gravity-shift"] --> PH["phaser"]
   NS["apps/neon-survivor"] --> PH
   ST["packages/starter"] --> PH
+  KIT["packages/kit"] --> THREE["three"]
+  RR["apps/ridgeline-racer"] --> KIT
+  TW["apps/trail-walk"] --> KIT
   classDef kiro fill:#6B2038,stroke:#6B2038,color:#FAF7F2
   classDef gd fill:#E7DCCB,stroke:#6B2038,color:#242424
   classDef game fill:#FAF7F2,stroke:#9A7B5F,color:#242424
-  class MCP,CORE,WB,ST gd
-  class GS,NS game
-  class SDK,ZOD,PW,VITE,REACT,PH game
+  class MCP,CORE,WB,ST,KIT gd
+  class GS,NS,RR,TW game
+  class SDK,ZOD,PW,VITE,REACT,PH,THREE game
 ```
 
 Production game bundles contain Phaser and first-party code only. `scripts/check-prod-bridge.mjs` confirms that the dev bridge, and with it Zod, stays out of them.

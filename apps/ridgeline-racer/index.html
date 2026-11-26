@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Ridgeline Racer</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #9fb3c8; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
+  canvas { display: block; touch-action: none; }
+  .hud { position: fixed; pointer-events: none; text-shadow: 0 1px 4px rgba(0, 0, 0, .55); z-index: 10; }
+  #tl { top: calc(16px + env(safe-area-inset-top, 0px)); left: calc(20px + env(safe-area-inset-left, 0px)); }
+  #tr { top: calc(16px + env(safe-area-inset-top, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); text-align: right; }
+  #bc { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); text-align: center; }
+  #hint { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: calc(20px + env(safe-area-inset-left, 0px)); font-size: 13px; opacity: .85; max-width: 32vw; }
+  .label { font-size: 11px; font-weight: 700; letter-spacing: .14em; opacity: .8; }
+  .value { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+  #speed { font-size: 50px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  #gear { font-size: 20px; font-weight: 800; margin-left: 8px; opacity: .9; }
+  #rpm { width: 170px; height: 5px; background: rgba(255, 255, 255, .22); margin: 7px auto 5px; border-radius: 3px; overflow: hidden; }
+  #rpmFill { height: 100%; width: 0; background: #fff; }
+  #notice { top: 22%; left: 50%; transform: translateX(-50%); font-size: 56px; font-weight: 800; letter-spacing: .05em; opacity: 0; transition: opacity .15s; white-space: nowrap; }
+  #view { top: calc(16px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: 700; letter-spacing: .14em; opacity: 0; transition: opacity .3s; }
+  #card { top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(14, 16, 20, .82); padding: 26px 36px; border-radius: 10px; text-align: center; display: none; text-shadow: none; }
+  #card .value { margin: 4px 0 14px; }
+  #paused { inset: 0; display: none; align-items: center; justify-content: center; font-size: 40px; font-weight: 800; letter-spacing: .1em; background: rgba(10, 12, 16, .35); }
+</style>
+</head>
+<body>
+<div class="hud" id="tl"><div class="label">LAP</div><div class="value" id="lap">1/3</div><div class="label">TIME</div><div class="value" id="time">0:00.000</div></div>
+<div class="hud" id="tr"><div class="label">BEST LAP</div><div class="value" id="best">-</div></div>
+<div class="hud" id="bc"><div><span id="speed">0</span><span id="gear">N</span></div><div id="rpm"><div id="rpmFill"></div></div><div class="label">KM/H</div></div>
+<div class="hud" id="hint"></div>
+<div class="hud" id="view"></div>
+<div class="hud" id="notice"></div>
+<div class="hud" id="paused">PAUSED</div>
+<div class="hud" id="card"><div class="label">TOTAL</div><div class="value" id="total"></div><div class="label">BEST LAP</div><div class="value" id="cardBest"></div><div id="again"></div></div>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

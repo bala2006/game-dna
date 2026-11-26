@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "note": "This game ships no asset files. Every texture and sound is generated at runtime from the URL seed by code in src/.",
+  "assets": []
+}

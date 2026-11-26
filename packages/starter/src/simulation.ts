@@ -131,24 +131,4 @@ export abstract class FixedStepSimulation implements GameHarness {
   protected abstract update(input: InputFrame): void;
 }
 
-/** Converts real elapsed time into a bounded number of fixed ticks (no spiral of death). */
-export class FixedStepClock {
-  private acc = 0;
-  constructor(private readonly hz = 60, private readonly maxStepsPerFrame = 5) {}
-
-  advance(deltaMs: number): number {
-    this.acc += Math.min(deltaMs, 250);
-    const stepMs = 1000 / this.hz;
-    let steps = 0;
-    while (this.acc >= stepMs && steps < this.maxStepsPerFrame) {
-      this.acc -= stepMs;
-      steps++;
-    }
-    if (steps === this.maxStepsPerFrame) this.acc = 0;
-    return steps;
-  }
-
-  reset(): void {
-    this.acc = 0;
-  }
-}
+export { FixedStepClock } from '@gamedna/kit/loop';

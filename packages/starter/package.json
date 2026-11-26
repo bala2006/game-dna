@@ -10,7 +10,8 @@
     "./phaser": "./src/phaser.ts"
   },
   "dependencies": {
-    "@gamedna/core": "*"
+    "@gamedna/core": "*",
+    "@gamedna/kit": "*"
   },
   "peerDependencies": {
     "phaser": "3.90.0"

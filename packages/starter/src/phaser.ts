@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { RawEvent } from '@gamedna/core';
-import { FixedStepClock, type FixedStepSimulation } from './simulation.js';
+import { FixedStepClock } from '@gamedna/kit/loop';
+import type { FixedStepSimulation } from './simulation.js';
 import { loadSettings, saveSettings, type ComfortSettings } from './settings.js';
 
 /** Logical key name → Phaser key names, e.g. { left: ['LEFT', 'A'] }. */

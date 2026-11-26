@@ -1,0 +1,21 @@
+{
+  "name": "trail-walk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Trail Walk: a 3D walk-and-collect game in third and first person with keyboard, mouse, gamepad and touch controls, built on the GameDNA Kit.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5176 --strictPort",
+    "build": "vite build && node ../../scripts/copy-licenses.mjs dist three",
+    "preview": "vite preview --host 127.0.0.1 --port 4176 --strictPort",
+    "test": "vitest --run --root . --dir tests"
+  },
+  "dependencies": {
+    "@gamedna/kit": "*",
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "vite": "7.3.8"
+  }
+}

@@ -11,6 +11,7 @@
     "./node": "./src/node/index.ts"
   },
   "dependencies": {
+    "@gamedna/kit": "*",
     "zod": "4.6.7"
   }
 }

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Trail Walk</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #9fb3c8; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
+  canvas { display: block; touch-action: none; }
+  .hud { position: fixed; pointer-events: none; text-shadow: 0 1px 4px rgba(0, 0, 0, .55); z-index: 10; }
+  #tl { top: calc(16px + env(safe-area-inset-top, 0px)); left: calc(84px + env(safe-area-inset-left, 0px)); }
+  .label { font-size: 11px; font-weight: 700; letter-spacing: .14em; opacity: .8; }
+  .value { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; margin-bottom: 6px; }
+  #view { top: calc(16px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: 700; letter-spacing: .14em; }
+  #hint { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: calc(20px + env(safe-area-inset-left, 0px)); font-size: 13px; opacity: .85; max-width: 40vw; }
+  #prompt { top: 62%; left: 50%; transform: translateX(-50%); font-size: 15px; font-weight: 700; letter-spacing: .08em; display: none; }
+  #dot { top: 50%; left: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: rgba(255, 255, 255, .85); display: none; }
+  #notice { top: 24%; left: 50%; transform: translateX(-50%); font-size: 40px; font-weight: 800; letter-spacing: .05em; opacity: 0; transition: opacity .15s; white-space: nowrap; }
+  #card { top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(14, 16, 20, .82); padding: 26px 36px; border-radius: 10px; text-align: center; display: none; text-shadow: none; }
+  #paused { inset: 0; display: none; align-items: center; justify-content: center; font-size: 40px; font-weight: 800; letter-spacing: .1em; background: rgba(10, 12, 16, .35); }
+</style>
+</head>
+<body>
+<div class="hud" id="tl"><div class="label">MARKERS</div><div class="value" id="count">0/8</div><div class="label">TIME</div><div class="value" id="time">0:00.0</div></div>
+<div class="hud" id="view"></div>
+<div class="hud" id="hint"></div>
+<div class="hud" id="prompt"></div>
+<div class="hud" id="dot"></div>
+<div class="hud" id="notice"></div>
+<div class="hud" id="paused">PAUSED</div>
+<div class="hud" id="card"><div class="label">ALL MARKERS FOUND</div><div class="value" id="total"></div><div id="again"></div></div>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>
