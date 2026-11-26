@@ -9,8 +9,6 @@ export const LIMITS = {
   maxSamples: 6_000,
   maxEvents: 20_000,
   maxRepeat: 10,
-  maxVariants: 3,
-  maxScenariosPerExperiment: 5,
   maxParameters: 200,
 } as const;
 
@@ -38,9 +36,9 @@ export const ParameterSpecSchema = z
     max: z.number().optional(),
     description: z.string().max(300).optional(),
     group: z.string().max(40).optional(),
-    /** Protected parameters encode game rules; experiments may not change them. */
+    /** Protected parameters encode game rules; tuning changes may not alter them. */
     protected: z.boolean().default(false),
-    /** Seeded-fault switches for demonstrations. Never allowed in experiments. */
+    /** Seeded-fault switches used by tests to prove a scenario detects a known bug. */
     fault: z.boolean().default(false),
   })
   .refine((s) => s.min === undefined || s.max === undefined || s.min <= s.max, { message: 'min must be <= max' });
@@ -56,18 +54,6 @@ export const ConstraintSchema = z.object({
 });
 export type Constraint = z.infer<typeof ConstraintSchema>;
 
-const LOOPBACK_URL = /^http:\/\/(127\.0\.0\.1|localhost|\[::1\]):\d{2,5}(\/[^\s]*)?$/;
-export const LoopbackUrlSchema = z.string().regex(LOOPBACK_URL, 'Only http loopback URLs (127.0.0.1, localhost, [::1]) with a port are allowed');
-
-export const CommandSchema = z.object({
-  /** Name of a script in the project's package.json. Never a raw shell command. */
-  script: z.string().regex(/^[a-zA-Z0-9:_-]{1,40}$/),
-  kind: z.enum(['dev', 'test', 'build']),
-  url: LoopbackUrlSchema.optional(),
-  readyTimeoutMs: z.number().int().min(1_000).max(120_000).default(30_000),
-  timeoutMs: z.number().int().min(1_000).max(600_000).default(120_000),
-});
-export type Command = z.infer<typeof CommandSchema>;
 
 export const MovementMetricsSchema = z.object({
   family: z.literal('movement'),
@@ -104,19 +90,10 @@ export const ProjectRecordSchema = z.object({
   }),
   /** Kiro spec requirements file, relative to the project root. */
   requirementsFile: z.string().max(200).optional(),
-  /** The native tuning file the game reads; Kiro edits it when applying a decision. */
+  /** The native tuning file the game reads. */
   tuningFile: z.string().max(200),
-  /** Simulation module for headless scenario runs (loaded through the project's own Vite). */
-  harness: z
-    .object({
-      module: z.string().max(200),
-      export: z.string().regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/),
-    })
-    .optional(),
-  viewport: z.object({ width: z.number().int().min(160).max(1920), height: z.number().int().min(120).max(1080) }),
   constraints: z.array(ConstraintSchema).max(50),
   parameters: z.record(ParameterKeySchema, ParameterSpecSchema),
-  commands: z.record(z.string().regex(/^[a-z][a-z0-9-]{1,30}$/), CommandSchema),
   metrics: z.array(MetricFamilySchema).max(4).default([]),
 });
 export type ProjectRecord = z.infer<typeof ProjectRecordSchema>;

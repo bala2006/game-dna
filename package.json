@@ -1,7 +1,7 @@
 {
   "name": "gamedna-monorepo",
   "private": true,
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "GameDNA: game-development knowledge, specialist agents and a tested game-code foundation for Kiro.",
   "license": "MIT",
   "type": "module",
@@ -19,7 +19,6 @@
     "assets": "npm run assets -w gravity-shift && npm run assets -w neon-survivor",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest --run",
-    "check:prod-bridge": "node scripts/check-prod-bridge.mjs apps/gravity-shift/dist apps/neon-survivor/dist",
     "regression": "node scripts/regression-hook.mjs",
     "test:e2e": "vitest --run --config vitest.e2e.config.ts",
     "check:docs": "node scripts/check-docs.mjs",

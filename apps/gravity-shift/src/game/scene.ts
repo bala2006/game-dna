@@ -116,7 +116,7 @@ export class GravityScene extends SimScene<GravityShiftSim> {
   }
 
   private play(name: (typeof SOUNDS)[number]): void {
-    if (this.controlled || this.settings.muted) return;
+    if (this.settings.muted) return;
     if (this.cache.audio.exists(`sfx-${name}`)) this.sound.play(`sfx-${name}`, { volume: 0.45 });
   }
 
@@ -208,8 +208,7 @@ export class GravityScene extends SimScene<GravityShiftSim> {
     this.hudRight.setText(`Keys ${sim.collected.size}/${sim.level.keys.length}   ·   Deaths ${sim.deaths}${this.settings.reducedMotion ? '   ·   Reduced motion' : ''}`);
 
     let body = '';
-    if (this.controlled) body = '';
-    else if (sim.won) body = 'You found your way out.\n\nPress R to play again.';
+    if (sim.won) body = 'You found your way out.\n\nPress R to play again.';
     else if (this.uiMode === 'title') body = 'Press Enter to begin\n\nArrows / A D  move   ·   Space  jump   ·   Shift / G  reverse gravity\nR  restart   ·   P  pause   ·   V  reduced motion   ·   M  mute';
     else if (this.uiMode === 'paused') body = 'Paused\n\nPress P to continue';
     this.overlay.setVisible(body !== '');

@@ -3,8 +3,8 @@
 Requirements: `requirements.md`. Design: `design.md`. A task is checked only when it is implemented and verified by the command named next to it.
 
 - [x] 1. Architecture, migration and competitive research documents (`npm run check:docs`)
-- [ ] 2. Remove experiments, decisions, design validation, reports and revisions from `packages/core`; remove `packages/phaser-adapter` and the apps' dev bridge (Req 1; `npm test`)
-- [ ] 3. Remove `packages/mcp`, `packages/workbench`, `power/server`, `power/mcp.json`, MCP scripts, settings and hooks; port the Phaser production smoke test (Req 1; `npm run build`, `npm run test:e2e`)
+- [x] 2. Remove experiments, decisions, design validation, reports and revisions from `packages/core`; remove `packages/phaser-adapter` and the apps' dev bridge (Req 1; `npm test`)
+- [x] 3. Remove `packages/mcp`, `packages/workbench`, `power/server`, `power/mcp.json`, MCP scripts, settings and hooks; port the Phaser production smoke test (Req 1; `npm run build`, `npm run test:e2e`)
 - [ ] 4. Project fingerprint script and tests (Req 2)
 - [ ] 5. `@gamedna/kit/contracts` and the contract template (Req 3)
 - [ ] 6. Kit simulation modules: collision, controllers, vehicle handling (Req 4)

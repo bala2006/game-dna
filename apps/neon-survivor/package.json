@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5174 --strictPort",
-    "build": "vite build && node ../../scripts/copy-licenses.mjs dist phaser && node ../../scripts/check-prod-bridge.mjs dist",
+    "build": "vite build && node ../../scripts/copy-licenses.mjs dist phaser",
     "preview": "vite preview --host 127.0.0.1 --port 4174 --strictPort",
     "test": "vitest --run --root . --dir tests",
     "assets": "tsx scripts/generate-assets.ts"
@@ -19,8 +19,6 @@
   },
   "devDependencies": {
     "@gamedna/assets": "*",
-    "@gamedna/phaser-adapter": "*",
-    "playwright": "1.65.1",
     "vite": "7.3.8"
   }
 }

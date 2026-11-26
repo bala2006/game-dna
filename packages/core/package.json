@@ -1,8 +1,8 @@
 {
   "name": "@gamedna/core",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "GameDNA schemas, scenario runner, experiments, decisions and evidence (isomorphic).",
+  "description": "GameDNA deterministic scenario runner, assertions, traces, metrics and tuning-parameter checks for tests (isomorphic).",
   "license": "MIT",
   "type": "module",
   "exports": {
