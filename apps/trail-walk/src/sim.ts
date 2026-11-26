@@ -1,7 +1,10 @@
 import { wrapAngle } from '@gamedna/kit/random';
 import type { Box, Layout } from './layout.js';
+import { stepSeconds } from '@gamedna/kit/contracts';
+import { CONTRACTS } from './contracts.js';
 
-export const DT = 1 / 60;
+/** Fixed timestep in seconds, from the simulation contract. */
+export const DT = stepSeconds(CONTRACTS);
 export const TUNE = { jog: 3.0, sprint: 5.5, toTop: 0.2, toStop: 0.15, turnTau: 0.12, jump: 4.6, gravity: 14.7, radius: 0.3, reach: 1.2 } as const;
 
 /** One tick of player input. Movement is relative to `cameraYaw`, the yaw the camera looked along last frame. */

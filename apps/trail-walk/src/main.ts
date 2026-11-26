@@ -7,6 +7,7 @@ import { createStage, hsv } from '@gamedna/kit/stage';
 import { MARKERS, buildLayout } from './layout.js';
 import { buildScenery } from './scenery.js';
 import { DT, TUNE, WalkSim } from './sim.js';
+import { CONTRACTS } from './contracts.js';
 
 const params = new URLSearchParams(location.search);
 const SEED = Number(params.get('seed') ?? 11) >>> 0;
@@ -144,4 +145,4 @@ exposeDevHook({
   standAtMarker(i: number) { const m = layout.markers[i]; if (m) sim.teleport(m.x + 0.6, m.z); },
 });
 
-runFixedStep({ tick, render });
+runFixedStep({ hz: CONTRACTS.simulation.hz, maxStepsPerFrame: CONTRACTS.simulation.maxStepsPerFrame, tick, render });

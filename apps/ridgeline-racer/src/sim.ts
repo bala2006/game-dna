@@ -1,8 +1,11 @@
 import { clamp, wrapAngle } from '@gamedna/kit/random';
 import type { GroundPoint } from '@gamedna/kit/world';
 import { ROAD, type Track } from './track.js';
+import { stepSeconds } from '@gamedna/kit/contracts';
+import { CONTRACTS } from './contracts.js';
 
-export const DT = 1 / 60;
+/** Fixed timestep in seconds, from the simulation contract. */
+export const DT = stepSeconds(CONTRACTS);
 export const LAPS = 3;
 export const COUNTDOWN_TICKS = 180;
 export const TUNE = {

@@ -14,13 +14,16 @@
     "./vehicle": "./src/vehicle.ts",
     "./character": "./src/character.ts",
     "./world": "./src/world.ts",
-    "./stage": "./src/stage.ts"
+    "./stage": "./src/stage.ts",
+    "./contracts": "./src/contracts.ts"
   },
   "peerDependencies": {
     "three": "0.170.0"
   },
   "peerDependenciesMeta": {
-    "three": { "optional": true }
+    "three": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "three": "0.170.0"

@@ -11,6 +11,7 @@ import { createEffects } from './effects.js';
 import { buildScenery } from './scenery.js';
 import { LAPS, RaceSim, TUNE, autoControls, drivetrain, formatTicks, type Controls } from './sim.js';
 import { buildTrack } from './track.js';
+import { CONTRACTS } from './contracts.js';
 
 const params = new URLSearchParams(location.search);
 const SEED = Number(params.get('seed') ?? 4) >>> 0;
@@ -174,4 +175,4 @@ exposeDevHook({
   setView: (i: number) => rig.setView(i),
 });
 
-runFixedStep({ tick, render });
+runFixedStep({ hz: CONTRACTS.simulation.hz, maxStepsPerFrame: CONTRACTS.simulation.maxStepsPerFrame, tick, render });
