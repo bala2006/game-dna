@@ -2,7 +2,7 @@
   "name": "gamedna-monorepo",
   "private": true,
   "version": "0.1.0",
-  "description": "GameDNA: a Kiro Power and local MCP toolset for evidence-driven game refinement.",
+  "description": "GameDNA: game-development knowledge, specialist agents and a tested game-code foundation for Kiro.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -13,8 +13,7 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build:workbench && npm run build:power && npm run build:apps",
-    "build:workbench": "npm run build -w @gamedna/workbench",
+    "build": "npm run build:power && npm run build:apps",
     "build:power": "node scripts/build-power.mjs",
     "build:apps": "npm run build -w gravity-shift && npm run build -w neon-survivor && npm run build -w ridgeline-racer && npm run build -w trail-walk",
     "assets": "npm run assets -w gravity-shift && npm run assets -w neon-survivor",
@@ -22,16 +21,15 @@
     "test": "vitest --run",
     "check:prod-bridge": "node scripts/check-prod-bridge.mjs apps/gravity-shift/dist apps/neon-survivor/dist",
     "regression": "node scripts/regression-hook.mjs",
-    "bench:mcp": "node scripts/bench-mcp.mjs",
     "test:e2e": "vitest --run --config vitest.e2e.config.ts",
     "check:docs": "node scripts/check-docs.mjs",
-    "check:power": "npm run build:workbench && npm run build:power && git diff --exit-code -- power/server power/kit"
+    "check:power": "npm run build:power && git diff --exit-code -- power/kit && test -z \"$(git status --porcelain -- power/kit)\""
   },
   "devDependencies": {
     "@types/node": "22.20.5",
     "@types/three": "0.170.0",
-    "esbuild": "0.28.2",
     "fast-check": "4.11.0",
+    "playwright": "1.65.1",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vite": "7.3.8",

@@ -64,7 +64,7 @@ Open the folder in Kiro: `.kiro/settings/mcp.json` starts the GameDNA server. Th
 
 ## Design choices
 
-- **TypeScript on Node 22** for the whole stack, after comparing Rust, Go, Python and Bun. One language lets the same scenario runner execute in Vitest, in the browser and in the server. Warmed MCP calls measure under 5 ms at p95 ([docs/BENCHMARKS.md](docs/BENCHMARKS.md)).
+- **TypeScript on Node 22** for the whole stack, after comparing Rust, Go, Python and Bun. One language lets the same scenario runner execute in Vitest, in the browser and in the server. 
 - **Deterministic fixed-step simulations.** Game rules are plain TypeScript classes; Phaser only draws them. Scenarios replay exactly, and five identical-seed runs match exactly.
 - **One browser round trip per scenario.** The adapter runs all ticks in the page.
 - **You stay in control.** Experiments never touch your files. Only a recorded user choice can be applied, and a changed baseline makes the choice stale.
@@ -86,7 +86,7 @@ The spec that drove this build is in `.kiro/specs/gamedna-mvp/`, with steering i
 
 ## Project documents
 
-[PRD](docs/GameDNA_PRD_v1.1_Kiroween.md) · [Install](docs/INSTALL.md) · [Benchmarks](docs/BENCHMARKS.md) · [Originality](docs/ORIGINALITY.md) · [Dependencies](docs/DEPENDENCY_INVENTORY.md) · [Third-party notices](docs/THIRD_PARTY_NOTICES.md) · [Docs rules](docs/rules.md)
+[PRD](docs/GameDNA_PRD_v1.1_Kiroween.md) · [Install](docs/INSTALL.md) · [Originality](docs/ORIGINALITY.md) · [Dependencies](docs/DEPENDENCY_INVENTORY.md) · [Third-party notices](docs/THIRD_PARTY_NOTICES.md) · [Docs rules](docs/rules.md)
 
 ## License
 

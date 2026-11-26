@@ -12,7 +12,6 @@
       "node",
       "vite/client"
     ],
-    "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
@@ -31,7 +30,6 @@
     "apps/*/tests/**/*",
     "apps/*/scripts/**/*.ts",
     "apps/*/vite.config.ts",
-    "packages/workbench/vite.config.ts",
     "vitest.config.ts",
     "tests/**/*.ts",
     "vitest.e2e.config.ts"

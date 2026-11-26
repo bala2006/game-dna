@@ -19,7 +19,7 @@ try {
     .split('\n')
     .filter(Boolean)
     .map((l) => l.slice(3).trim().replace(/^"|"$/g, ''))
-    .filter((f) => /\.(ts|tsx|json|mjs)$/.test(f) && !f.includes('.gamedna/evidence') && !f.startsWith('power/server/'));
+    .filter((f) => /\.(ts|tsx|json|mjs)$/.test(f) && !f.startsWith('power/kit/'));
 } catch {
   say('git not available; skipping');
   process.exit(0);
@@ -39,7 +39,7 @@ if (last?.fingerprint === fingerprint) {
 }
 
 // Shared packages affect everything; an app change only needs that app's tests.
-const shared = changed.some((f) => /^packages\/(core|starter|phaser-adapter|assets)\//.test(f) || f === 'package.json' || f === 'vitest.config.ts');
+const shared = changed.some((f) => /^packages\/(core|starter|kit|assets)\//.test(f) || f === 'package.json' || f === 'vitest.config.ts');
 const dirs = shared ? [] : [...new Set(changed.map((f) => f.match(/^(apps\/[^/]+|packages\/[^/]+)\//)?.[1]).filter(Boolean))];
 if (!shared && dirs.length === 0) {
   if (!quiet) say('changes do not touch tested code; skipping');

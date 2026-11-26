@@ -1,13 +1,28 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "gamedna",
-  "version": "0.1.0",
-  "description": "Game-development expertise and local instruments for Phaser games: design skills, procedural assets, runtime observation, playable A/B/C experiments with your choice, and requirement-linked verification.",
+  "version": "2.0.0",
+  "description": "Game-development knowledge for Kiro: scoped skills for gameplay, simulation, worlds, visuals, motion, input, game feel and performance on Phaser 3.90 and three.js 0.170, plus the GameDNA Kit source.",
   "author": {
     "name": "Moole Bala Chandra Sekhar Reddy",
     "url": "https://github.com/bala2006"
   },
-  "keywords": ["game development", "gamedev", "Phaser", "game feel", "playtest", "sprite", "game design", "platformer", "juice", "level design", "gamedna"],
+  "keywords": [
+    "game development",
+    "gamedev",
+    "game design",
+    "Phaser",
+    "three.js",
+    "game feel",
+    "physics",
+    "collision",
+    "enemy AI",
+    "procedural generation",
+    "camera",
+    "platformer",
+    "racing",
+    "gamedna"
+  ],
   "homepage": "https://github.com/bala2006/game-dna",
   "repository": "https://github.com/bala2006/game-dna",
   "license": "MIT"
