@@ -24,8 +24,9 @@ This file routes work. It holds no craft detail. At each step, load the named sk
 | Phaser project in this repo | 2D, and the user wants GameDNA's MCP tools | technical-art for assets | playtesting skill |
 | three.js on the GameDNA Kit, Vite | Any 3D game | three-js | three-js skill, Verify |
 | One HTML file | The user asks for one file to share | three-js, then pack the build into one file | three-js skill, Verify |
+| Godot 4 project | The user works in Godot | `gd_install_adapter`, then the wiring in `power/adapters/godot/README.md` | playtesting skill, with `commandId: "headless"` |
 
-GameDNA's MCP tools load Phaser projects only. They reject a three.js project with `UNSUPPORTED_ENGINE`. For 3D, the Kit (`packages/kit`, shipped in the Power as `kit/`) holds the tested code for input, cameras, vehicles, characters, terrain and the stage. Steps below name the Kit module each skill uses.
+GameDNA's MCP tools reach a game through a development-only adapter. Phaser and Godot 4 adapters ship today. `gd_project_status` detects the other engines and labels them unverified until their adapter ships, and three.js games are checked with Playwright until then. For 3D, the Kit (`packages/kit`, shipped in the Power as `kit/`) holds the tested code for input, cameras, vehicles, characters, terrain and the stage. Steps below name the Kit module each skill uses.
 
 ## Step 2: Pick a recipe
 
