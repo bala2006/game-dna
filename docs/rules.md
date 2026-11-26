@@ -59,6 +59,19 @@ Every H2 section starts with one icon from the table below. Put the icon after t
 | Latency | ⏱️ | Measured tool response times |
 | Reproducibility | 🔁 | Repeated identical-seed runs |
 | Test coverage | 🧪 | Automated checks per area |
+| Design principles | 🎯 | Rules that guide recurring decisions |
+| Director | 🎬 | The coordinating agent |
+| Specialist agents | 👥 | Roles and delegation |
+| Game Contracts | 📐 | Shared subsystem interfaces |
+| Project fingerprint | 🪪 | Detected project facts |
+| Knowledge activation | 🧠 | How expertise is found and loaded |
+| Reusable foundation | 🏭 | Tested game code modules |
+| Component classification | 🔀 | Retain, improve, refactor, replace, remove |
+| Capability catalog | 🗂 | What is implemented and verified |
+| Known limitations | 🚧 | What is missing or unverified |
+| Evaluation results | 📊 | Measured outcomes |
+| Competitive positioning | 🥊 | Comparison with studied alternatives |
+| Contributing | 🤝 | How to change the project |
 
 ```markdown
 ## <span style="color:#B84D73">💡 1. Executive summary</span>
