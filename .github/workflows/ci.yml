@@ -63,8 +63,8 @@ jobs:
         run: npm run build
       - name: Committed power/server matches the source
         run: |
-          if ! git diff --exit-code --stat -- power/server; then
-            echo "::error title=Stale Power bundle::power/server is out of date. Run 'npm run build:workbench && npm run build:power' and commit the result."
+          if ! git diff --exit-code --stat -- power/server power/kit || [ -n "$(git status --porcelain -- power/kit)" ]; then
+            echo "::error title=Stale Power bundle::power/server or power/kit is out of date. Run 'npm run build:workbench && npm run build:power' and commit the result."
             exit 1
           fi
       - name: Upload game builds
@@ -77,9 +77,9 @@ jobs:
           retention-days: 7
 
   e2e:
-    name: Browser end-to-end (MCP over stdio + Chromium)
+    name: Browser end-to-end (MCP over stdio, Kit apps, Chromium)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:

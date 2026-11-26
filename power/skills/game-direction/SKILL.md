@@ -1,6 +1,6 @@
 ---
 name: game-direction
-description: Turn a game idea into a small, coherent design with a core loop, player verbs, protected rules and a GameDNA design record. Use when starting a new game, choosing between concepts, or scoping a game jam entry.
+description: Turn a game idea into a small design with a core loop, player verbs, protected rules and a design record. Use when starting a game, choosing between concepts or scoping a jam entry.
 ---
 
 # Game direction

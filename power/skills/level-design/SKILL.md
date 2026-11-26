@@ -1,6 +1,6 @@
 ---
 name: level-design
-description: Design short levels that teach, test and twist one mechanic at a time, with safe spawns, fair hazards and checkable reachability. Use when building or reviewing levels, rooms, arenas or waves.
+description: Short levels that teach, test and twist one mechanic at a time, with safe spawns, fair hazards and checkable reachability. Use when building or reviewing levels, rooms, arenas or waves.
 ---
 
 # Level design

@@ -1,6 +1,6 @@
 ---
 name: playtesting
-description: Observe the running game, write scenarios with scripted input and assertions, capture screenshots and traces, check reproducibility, and catch regressions in protected rules. Use when testing a game, checking that a change broke nothing, or reproducing a bug.
+description: Test a Phaser game with GameDNA tools. Observe it running, script input in scenarios with assertions, capture screenshots and traces, catch regressions. Use when checking a change or reproducing a bug.
 ---
 
 # Playtesting with GameDNA

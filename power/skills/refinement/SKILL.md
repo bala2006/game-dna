@@ -1,6 +1,6 @@
 ---
 name: refinement
-description: Run the GameDNA refinement loop - baseline, 2-3 playable parameter variants, the user's explicit choice, a verified change and a recorded decision. Use when the user wants something to feel or play better, asks for options to compare, or wants to revert a past choice.
+description: Offer 2-3 playable variants, record the user's explicit choice, verify the change and log the decision. Use when the user wants options to compare, or wants to revert a past choice.
 ---
 
 # Refinement loop

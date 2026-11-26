@@ -1,6 +1,6 @@
 ---
 name: game-feel
-description: Tune movement and combat feel with measurable parameters - acceleration, jump arcs, coyote time, input buffering, hit-stop, knockback, flash and shake. Use when the user says controls feel floaty, stiff, sluggish, weak, or "make it feel better".
+description: Jump arcs, coyote time, input buffering, hit-stop, knockback, flash and shake, with numbers. Use when jumping or combat feels floaty, stiff, sluggish or weak.
 ---
 
 # Game feel

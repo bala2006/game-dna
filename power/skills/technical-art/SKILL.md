@@ -1,9 +1,11 @@
 ---
 name: technical-art
-description: Choose a style pack and generate original, deterministic sprites, tiles, backgrounds, icons, particles and sound effects with GameDNA, then validate them. Use when a game needs art, a visual direction, or consistent assets.
+description: Phaser 2D assets with GameDNA. Style packs and deterministic sprites, tiles, backgrounds, icons, particles and sounds, with validation. Use when a 2D game needs art or sound.
 ---
 
 # Technical art
+
+Set the look first with the art-direction skill. This skill turns that look into assets.
 
 ## Step 1: Pick a style pack
 
