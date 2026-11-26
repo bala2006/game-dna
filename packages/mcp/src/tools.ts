@@ -1,9 +1,9 @@
-import { spawn } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import {
   GameDNAError,
   GAMEDNA_VERSION,
+  LIMITS,
   createExperiment,
   decisionFromSelection,
   diffParameters,
@@ -24,12 +24,13 @@ import {
 } from '@gamedna/core';
 import { newId, resolveInside, writeFileAtomic, writeJsonAtomic } from '@gamedna/core/node';
 import { STYLE_PACKS, STYLE_PACK_IDS, getStylePack, mimeType, materializeAsset, readManifest, type AssetRequest } from '@gamedna/assets/node';
+import { prepareCommand, resolveTool, runCommand, setToolPath } from './commands.js';
+import { adapterStatus, adaptersRoot, detectProject, type DetectedEngine } from './engines.js';
 import { invalidateHarness } from './headless.js';
 import {
   EVIDENCE_DIR,
   RECORD_FILE,
   baselineRevision,
-  detectEngine,
   detectPackageManager,
   getScenario,
   listExperiments,
@@ -44,8 +45,8 @@ import {
   saveExperiment,
   type LoadedProject,
 } from './project.js';
-import { executeScenario, saveScreenshot } from './runner.js';
-import type { SessionManager } from './session.js';
+import { adapterScreenshot, canScreenshot, executeScenario, saveScreenshot, type ScenarioTarget } from './runner.js';
+import type { ProcessSession, Session, SessionManager } from './session.js';
 import type { WorkbenchServer } from './workbench-server.js';
 
 export interface ToolContext {
@@ -69,37 +70,67 @@ const ok = (data: Record<string, unknown>, images?: ImageOut[]): ToolResult => (
 
 export function openProject(ctx: ToolContext, projectPath = '.'): LoadedProject {
   const root = resolveInside(ctx.workspaceRoot, projectPath);
-  if (!existsSync(path.join(root, 'package.json'))) throw new GameDNAError('NOT_FOUND', `No package.json at ${projectPath}`, { fix: 'projectPath is relative to the workspace root, e.g. "apps/gravity-shift".' });
-  detectEngine(root, readPackage(root));
-  const record = loadRecord(root);
+  const record = existsSync(resolveInside(root, RECORD_FILE)) ? loadRecord(root) : undefined;
+  const engine = detectProject(root, record);
+  if (!record) throw new GameDNAError('NOT_FOUND', `${RECORD_FILE} not found in ${projectPath}`, { fix: `Create ${RECORD_FILE}; see power/skills/game-direction/SKILL.md for the schema.` });
   const tuning = loadTuning(root, record);
   const relPath = path.relative(ctx.workspaceRoot, root) || '.';
   ctx.registry.set(record.projectId, { root, relPath, name: record.name });
-  return { root, relPath, record, tuning };
+  return { root, relPath, record, tuning, engine };
+}
+
+/** The engine of a folder, using the record when it is valid (it decides custom engines). */
+function engineAt(root: string): DetectedEngine {
+  let record;
+  try {
+    record = loadRecord(root);
+  } catch {
+    record = undefined;
+  }
+  return detectProject(root, record);
+}
+
+const RUNTIME_CAPABILITIES: Record<DetectedEngine['profile']['runtime'], string[]> = {
+  browser: ['headless_scenarios', 'browser_sessions', 'screenshots'],
+  process: ['process_sessions', 'attach_sessions', 'adapter_screenshots'],
+  android: [],
+};
+
+function sessionSummary(s: Session): Record<string, unknown> {
+  if (s.runtime === 'browser') return { sessionId: s.id, runtime: s.runtime, url: s.url };
+  return { sessionId: s.id, runtime: s.runtime, bridge: s.bridge.address, status: s.bridge.driver && !s.bridge.driver.closed ? 'ready' : s.bridge.driver ? 'disconnected' : 'waiting', launched: s.process !== null };
 }
 
 // ------------------------------------------------------------------ gd_project_status
 
 export function projectStatus(ctx: ToolContext, args: { projectPath?: string }): ToolResult {
   const root = resolveInside(ctx.workspaceRoot, args.projectPath ?? '.');
-  const pkg = readPackage(root);
-  const engine = detectEngine(root, pkg);
-  const adapterInstalled = Boolean(pkg.deps['@gamedna/phaser-adapter']) || existsSync(path.join(root, 'src/dev/gamedna-adapter.ts'));
+  const recordFile = resolveInside(root, RECORD_FILE);
+  const v = existsSync(recordFile) ? validateDesign(JSON.parse(readFileSync(recordFile, 'utf8'))) : null;
+  const { profile, version } = detectProject(root, v?.record ?? undefined);
+  const hasPackage = existsSync(resolveInside(root, 'package.json'));
   const out: Record<string, unknown> = {
     gamednaVersion: GAMEDNA_VERSION,
     projectPath: path.relative(ctx.workspaceRoot, root) || '.',
-    packageName: pkg.name,
-    engine,
-    packageManager: detectPackageManager(root, ctx.workspaceRoot),
-    adapter: adapterInstalled ? 'installed (dev builds only)' : 'missing',
-    browserRunner: resolveFromProject(root, 'playwright') ? 'playwright available' : 'playwright not installed (headless runs still work)',
-    capabilities: ['project_status', 'style_packs', 'design_validation', 'asset_generation', 'headless_scenarios', 'browser_sessions', 'screenshots', 'experiments', 'workbench', 'decisions', 'verification', 'reports'],
+    engine: { id: profile.id, label: profile.label, version, runtime: profile.runtime, verified: profile.verified },
+    adapter: adapterStatus(root, profile),
+    tools: profile.tools.map((name) => {
+      try {
+        const r = resolveTool(name, root);
+        return { name, path: r?.path ?? null, source: r?.source ?? null };
+      } catch (err) {
+        return { name, path: null, source: null, error: (err as Error).message };
+      }
+    }),
+    assetDir: profile.assetDir,
+    ...(hasPackage ? { packageName: readPackage(root).name, packageManager: detectPackageManager(root, ctx.workspaceRoot) } : {}),
+    ...(profile.runtime === 'browser' ? { browserRunner: resolveFromProject(root, 'playwright') ? 'playwright available' : 'playwright not installed (headless runs still work)' } : {}),
+    capabilities: ['project_status', 'style_packs', 'design_validation', 'asset_generation', ...RUNTIME_CAPABILITIES[profile.runtime], 'experiments', 'workbench', 'decisions', 'verification', 'reports'],
   };
-  if (!existsSync(path.join(root, RECORD_FILE))) {
+  if (!v) {
     out['record'] = { state: 'missing', fix: `Create ${RECORD_FILE}; see power/skills/game-direction/SKILL.md for the schema.` };
     return ok(out);
   }
-  const v = validateDesign(JSON.parse(readFileSync(path.join(root, RECORD_FILE), 'utf8')));
   if (!v.record) {
     out['record'] = { state: 'invalid', errors: v.errors };
     return ok(out);
@@ -109,6 +140,7 @@ export function projectStatus(ctx: ToolContext, args: { projectPath?: string }):
   const decisions = loadDecisions(root).decisions;
   const byStatus: Record<string, number> = {};
   for (const d of decisions) byStatus[d.status] = (byStatus[d.status] ?? 0) + 1;
+  const headlessCommand = Object.entries(project.record.commands).find(([, c]) => c.kind === 'headless')?.[0];
   out['record'] = {
     state: 'valid',
     projectId: project.record.projectId,
@@ -119,13 +151,20 @@ export function projectStatus(ctx: ToolContext, args: { projectPath?: string }):
     parameters: Object.fromEntries(Object.entries(project.record.parameters).map(([k, s]) => [k, { value: project.tuning[k], unit: s.unit, min: s.min, max: s.max, protected: s.protected, fault: s.fault }])),
     baselineRevision: baselineRevision(root, project.record),
     commands: project.record.commands,
-    headless: project.record.harness ? `available (${project.record.harness.module}#${project.record.harness.export})` : 'not configured',
+    headless:
+      profile.runtime === 'browser'
+        ? project.record.harness
+          ? `available (${project.record.harness.module}#${project.record.harness.export})`
+          : 'not configured'
+        : headlessCommand
+          ? `available (command "${headlessCommand}")`
+          : 'not configured',
   };
   out['scenarios'] = scen.scenarios.map((s) => ({ id: s.id, description: s.description, checks: [...new Set(s.assertions.map((a) => a.checkId))], tags: s.tags, ...(s.detectsFault ? { detectsFault: s.detectsFault } : {}) }));
   if (scen.invalid.length) out['invalidScenarios'] = scen.invalid;
   out['experiments'] = listExperiments(root).map((e) => ({ experimentId: e.experimentId, question: e.question, status: e.status }));
   out['decisions'] = byStatus;
-  out['sessions'] = ctx.sessions.list().filter((s) => s.projectId === project.record.projectId).map((s) => ({ sessionId: s.id, url: s.url }));
+  out['sessions'] = ctx.sessions.list().filter((s) => s.projectId === project.record.projectId).map(sessionSummary);
   return ok(out);
 }
 
@@ -170,7 +209,7 @@ export function validateDesignTool(ctx: ToolContext, args: { projectPath?: strin
 
 export function generateAssetTool(ctx: ToolContext, args: { projectPath?: string; id: string; request: AssetRequest; dir?: string }): ToolResult {
   const root = resolveInside(ctx.workspaceRoot, args.projectPath ?? '.');
-  const dir = args.dir ?? 'public/assets/generated';
+  const dir = args.dir ?? engineAt(root).profile.assetDir;
   if (!/^[a-zA-Z0-9_./-]{1,120}$/.test(dir) || dir.includes('..')) throw new GameDNAError('PERMISSION_DENIED', 'dir must be a simple relative path inside the project');
   const m = materializeAsset(root, args.id, args.request, { dir, createdWith: 'gd_generate_asset', now: ctx.now() });
   const images: ImageOut[] = m.asset.payload.format === 'rgba' ? [{ data: m.bytes.toString('base64'), mimeType: 'image/png' }] : [];
@@ -180,11 +219,30 @@ export function generateAssetTool(ctx: ToolContext, args: { projectPath?: string
 
 // ------------------------------------------------------------------ sessions
 
+function processSessionInfo(s: ProcessSession): Record<string, unknown> {
+  const driver = s.bridge.driver;
+  if (driver) {
+    const { token: _token, ...adapter } = driver.hello;
+    return { sessionId: s.id, runtime: 'process', status: driver.closed ? 'disconnected' : 'ready', ready: !driver.closed, launched: s.process !== null, commandId: s.commandId, adapter, diagnostics: s.errors.slice(-5) };
+  }
+  return {
+    sessionId: s.id,
+    runtime: 'process',
+    status: 'waiting',
+    ready: false,
+    bridge: s.bridge.address,
+    token: s.token,
+    launchEnv: s.launchEnv,
+    next: 'Launch a development build of the game with launchEnv set, for example from the editor. The next call on this session waits up to 30 s for the game to connect.',
+  };
+}
+
 export async function startSession(ctx: ToolContext, args: { projectPath?: string; commandId?: string; url?: string }): Promise<ToolResult> {
   const project = openProject(ctx, args.projectPath);
   const existing = ctx.sessions.forProject(project.record.projectId);
-  if (existing) return ok({ sessionId: existing.id, url: existing.url, reused: true });
-  const s = await ctx.sessions.start({ root: project.root, record: project.record, ...(args.commandId ? { commandId: args.commandId } : {}), ...(args.url ? { url: args.url } : {}) });
+  if (existing) return ok(existing.runtime === 'browser' ? { sessionId: existing.id, url: existing.url, reused: true } : { ...processSessionInfo(existing), reused: true });
+  const s = await ctx.sessions.start({ root: project.root, record: project.record, profile: project.engine.profile, ...(args.commandId ? { commandId: args.commandId } : {}), ...(args.url ? { url: args.url } : {}) });
+  if (s.runtime === 'process') return ok(processSessionInfo(s));
   const info = await s.page.evaluate(() => (window as unknown as { __GAMEDNA__: { info(): unknown } }).__GAMEDNA__.info(), undefined);
   return ok({ sessionId: s.id, url: s.url, ready: true, spawnedDevServer: s.spawned, browser: `chromium ${s.browserVersion}`, adapter: info, diagnostics: s.errors.slice(-5) });
 }
@@ -193,8 +251,73 @@ export async function stopSession(ctx: ToolContext, args: { sessionId: string })
   return ok({ ...(await ctx.sessions.stop(args.sessionId)) });
 }
 
+interface AcquiredTarget {
+  target: ScenarioTarget;
+  sessionId: string | null;
+  release(): Promise<void>;
+}
+
+/**
+ * Where scenarios run: the given session, the harness module for browser engines, or a temporary
+ * session from the record's headless command for every other engine. `release` stops a temporary session.
+ */
+async function acquireTarget(ctx: ToolContext, project: LoadedProject, session: Session | undefined): Promise<AcquiredTarget> {
+  const keep = async () => undefined;
+  if (session?.runtime === 'browser') return { target: { runtime: 'browser', session }, sessionId: session.id, release: keep };
+  if (session) return { target: { runtime: 'process', driver: await ctx.sessions.driver(session) }, sessionId: session.id, release: keep };
+  const { profile } = project.engine;
+  if (profile.runtime === 'browser') return { target: { runtime: 'headless-node' }, sessionId: null, release: keep };
+  const headless = Object.entries(project.record.commands).find(([, c]) => c.kind === 'headless')?.[0];
+  if (!headless) {
+    throw new GameDNAError('SESSION_NOT_READY', `${profile.label} scenarios need a running game`, {
+      fix: 'Start a session with gd_start_session, or declare a "headless" command (argv) in .gamedna/project.json that launches the game with the adapter.',
+    });
+  }
+  const temp = await ctx.sessions.start({ root: project.root, record: project.record, profile, commandId: headless });
+  const release = async () => {
+    await ctx.sessions.stop(temp.id);
+  };
+  if (temp.runtime !== 'process') {
+    await release();
+    throw new GameDNAError('INVALID_INPUT', `Command "${headless}" did not start a process session`);
+  }
+  try {
+    return { target: { runtime: 'process', driver: await ctx.sessions.driver(temp) }, sessionId: temp.id, release };
+  } catch (err) {
+    await release();
+    throw err;
+  }
+}
+
+async function observeProcess(ctx: ToolContext, s: ProcessSession, args: { fields?: string[]; screenshot?: boolean; eventCursor?: number; step?: number }): Promise<ToolResult> {
+  const driver = await ctx.sessions.driver(s);
+  let stepped: Record<string, unknown> | null = null;
+  if (args.step) {
+    await driver.call('control', { mode: 'controlled' });
+    const from = (await driver.call('snapshot', {})).tick;
+    const to = from + args.step;
+    const r = await driver.call('advance', { to, inputs: [], sampleEvery: to + 1, lastTick: to, maxEvents: LIMITS.maxEvents });
+    stepped = { mode: 'controlled', from, to: r.tick, events: r.events.length };
+  }
+  const snap = await driver.call('snapshot', args.fields?.length ? { fields: args.fields } : {});
+  const events = await driver.call('events', { cursor: args.eventCursor ?? 0, limit: 100 });
+  const images: ImageOut[] = [];
+  const limitations: string[] = [];
+  let screenshotId: string | null = null;
+  if (args.screenshot && canScreenshot(driver)) {
+    const png = await adapterScreenshot(driver);
+    screenshotId = await saveScreenshot(openProject(ctx, path.relative(ctx.workspaceRoot, s.root) || '.'), png);
+    images.push({ data: png.toString('base64'), mimeType: 'image/png' });
+  } else if (args.screenshot) {
+    limitations.push(`The ${driver.hello.engine} adapter does not offer screenshots (hello.capabilities).`);
+  }
+  const missing = (args.fields ?? []).filter((f) => !(f in snap.state));
+  return ok({ sessionId: s.id, runtime: 'process', snapshot: { tick: snap.tick, state: snap.state, missing }, events, stepped, screenshotId, limitations, runtimeErrors: s.errors.slice(-10) }, images);
+}
+
 export async function observe(ctx: ToolContext, args: { sessionId: string; fields?: string[]; screenshot?: boolean; eventCursor?: number; step?: number }): Promise<ToolResult> {
   const s = ctx.sessions.get(args.sessionId);
+  if (s.runtime === 'process') return observeProcess(ctx, s, args);
   type Api = { getSnapshot(f?: string[]): unknown; getEvents(c: number, l: number): unknown; step(n: number): unknown; info(): unknown };
   if (args.step) await s.page.evaluate((n) => (window as unknown as { __GAMEDNA__: Api }).__GAMEDNA__.step(n), args.step);
   const snap = await s.page.evaluate((f) => (window as unknown as { __GAMEDNA__: Api }).__GAMEDNA__.getSnapshot(f), args.fields ?? []);
@@ -217,13 +340,21 @@ export async function runScenarioTool(ctx: ToolContext, args: { projectPath?: st
   const project = openProject(ctx, session ? path.relative(ctx.workspaceRoot, session.root) || '.' : args.projectPath);
   const scenario = getScenario(project.root, args.scenarioId);
   const revision = baselineRevision(project.root, project.record);
-  const ex = await executeScenario({ project, scenario, overrides: args.params ?? {}, ...(args.seed !== undefined ? { seed: args.seed } : {}), repeat: args.repeat ?? 1, session, screenshots: args.screenshots ?? false, revision });
+  const acquired = await acquireTarget(ctx, project, session);
+  let ex;
+  try {
+    ex = await executeScenario({ project, scenario, overrides: args.params ?? {}, ...(args.seed !== undefined ? { seed: args.seed } : {}), repeat: args.repeat ?? 1, target: acquired.target, screenshots: args.screenshots ?? false, revision });
+  } finally {
+    await acquired.release();
+  }
   const run = ex.runs[0]!;
   const status: CheckStatus = run.status === 'failed' ? 'failed' : ex.reproducibility.status === 'unstable' ? 'unstable' : run.status;
   return ok({
     status,
     scenarioId: run.scenarioId,
     runtime: ex.runtime,
+    sessionId: acquired.sessionId,
+    ...(acquired.sessionId && !session ? { temporarySession: true } : {}),
     revision,
     seed: run.seed,
     params: args.params ?? {},
@@ -275,23 +406,29 @@ export async function compareExperiment(ctx: ToolContext, args: { projectPath?: 
   const results: Record<string, VariantEvidence[]> = {};
   const warnings: string[] = [];
   if (revision !== exp.baselineRevision) warnings.push(`Baseline changed since the experiment was created (${exp.baselineRevision} → ${revision}); evidence reflects the current files.`);
-  for (const v of exp.variants) {
-    results[v.id] = [];
-    for (const scenarioId of exp.scenarioIds) {
-      const scenario = getScenario(project.root, scenarioId);
-      const ex = await executeScenario({ project, scenario, overrides: v.parameters, repeat: args.repeat ?? 3, session, screenshots: Boolean(session), revision });
-      const run = ex.runs[0]!;
-      const checks = run.checks.filter((c) => exp.protectedChecks.length === 0 || exp.protectedChecks.includes(c.id));
-      results[v.id]!.push({
-        scenarioId,
-        status: run.status === 'failed' ? 'failed' : ex.reproducibility.status === 'unstable' ? 'unstable' : worstStatus(checks.map((c) => c.status)),
-        checks,
-        metrics: ex.metrics,
-        traceId: ex.traceId,
-        reproducibility: `${ex.reproducibility.status}: ${ex.reproducibility.note}`,
-        screenshotIds: ex.screenshotIds,
-      });
+  const acquired = await acquireTarget(ctx, project, session);
+  const { target } = acquired;
+  try {
+    for (const v of exp.variants) {
+      results[v.id] = [];
+      for (const scenarioId of exp.scenarioIds) {
+        const scenario = getScenario(project.root, scenarioId);
+        const ex = await executeScenario({ project, scenario, overrides: v.parameters, repeat: args.repeat ?? 3, target, screenshots: target.runtime !== 'headless-node', revision });
+        const run = ex.runs[0]!;
+        const checks = run.checks.filter((c) => exp.protectedChecks.length === 0 || exp.protectedChecks.includes(c.id));
+        results[v.id]!.push({
+          scenarioId,
+          status: run.status === 'failed' ? 'failed' : ex.reproducibility.status === 'unstable' ? 'unstable' : worstStatus(checks.map((c) => c.status)),
+          checks,
+          metrics: ex.metrics,
+          traceId: ex.traceId,
+          reproducibility: `${ex.reproducibility.status}: ${ex.reproducibility.note}`,
+          screenshotIds: ex.screenshotIds,
+        });
+      }
     }
+  } finally {
+    await acquired.release();
   }
   exp = { ...exp, evidence: { generatedAt: ctx.now(), sessionId: session?.id ?? null, seedNote: 'Each scenario uses its own fixed seed for every variant.', results, notTestedReason: null } };
   saveExperiment(project.root, exp);
@@ -300,7 +437,7 @@ export async function compareExperiment(ctx: ToolContext, args: { projectPath?: 
   const protectedSummary = Object.fromEntries(Object.entries(results).map(([vid, evs]) => [vid, worstStatus(evs.map((e) => e.status))]));
   return ok({
     experimentId: exp.experimentId,
-    runtime: session ? 'browser' : 'headless-node',
+    runtime: target.runtime,
     protectedChecks: protectedSummary,
     metricDeltas: deltas,
     workbenchUrl: ctx.workbench.url({ projectId: project.record.projectId, experimentId: exp.experimentId }),
@@ -386,26 +523,44 @@ interface VerifyCheck {
   traceId?: string;
 }
 
-function runTestCommand(root: string, script: string, timeoutMs: number): Promise<{ code: number | null; output: string; timedOut: boolean }> {
-  return new Promise((resolve) => {
-    const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-    const child = spawn(npm, ['run', script], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, CI: '1', FORCE_COLOR: '0', NO_COLOR: '1' } });
-    let out = '';
-    const add = (d: Buffer) => {
-      // eslint-disable-next-line no-control-regex
-      out = (out + d.toString().replace(/\u001b\[[0-9;]*m/g, '')).slice(-4000);
-    };
-    child.stdout.on('data', add);
-    child.stderr.on('data', add);
-    const timer = setTimeout(() => {
-      child.kill('SIGTERM');
-      resolve({ code: null, output: out, timedOut: true });
-    }, timeoutMs);
-    child.on('close', (code) => {
-      clearTimeout(timer);
-      resolve({ code, output: out, timedOut: false });
-    });
-  });
+/** What the running game reports for the decision's parameters. A failure to ask is not_tested, never passed. */
+async function runtimeParamsCheck(ctx: ToolContext, target: ScenarioTarget | null, targetError: string | null, decision: DecisionRecord, revert: boolean): Promise<VerifyCheck> {
+  const id = 'RUNTIME-PARAMS';
+  if (!target) return { id, status: 'not_tested', evidence: `Could not reach the game: ${targetError}` };
+  if (target.runtime === 'headless-node') return { id, status: 'not_tested', evidence: 'No browser session; the tuning file was checked directly.' };
+  const want = (k: { from?: unknown; to: unknown }) => (revert ? k.from : k.to);
+  let runtime: Record<string, unknown>;
+  try {
+    if (target.runtime === 'browser') {
+      // Reload so the dev server serves the edited tuning file.
+      await ctx.sessions.load(target.session, true);
+      runtime = await target.session.page.evaluate(() => (window as unknown as { __GAMEDNA__: { getParameters(): Record<string, unknown> } }).__GAMEDNA__.getParameters(), undefined);
+    } else {
+      // Clear overrides left by earlier scenario runs before reading the game's own values.
+      await target.driver.call('reset', { seed: 0, params: {}, setup: {} });
+      runtime = (await target.driver.call('parameters', {})).values;
+    }
+  } catch (err) {
+    return { id, status: 'not_tested', evidence: `Could not read the running game's parameters: ${(err as Error).message}` };
+  }
+  const off = decision.parameterDiff.filter((d) => runtime[d.key] !== want(d));
+  return { id, status: off.length ? 'failed' : 'passed', evidence: off.length ? `Running game uses ${off.map((d) => `${d.key}=${String(runtime[d.key])}`).join(', ')}` : 'Running game reports the expected effective parameters' };
+}
+
+async function projectTestsCheck(project: LoadedProject): Promise<VerifyCheck> {
+  const id = 'PROJECT-TESTS';
+  const commandId = Object.entries(project.record.commands).find(([, c]) => c.kind === 'test')?.[0];
+  if (!commandId) return { id, status: 'not_tested', evidence: 'No test command declared in project.json' };
+  let cmd;
+  try {
+    cmd = prepareCommand({ root: project.root, record: project.record, profile: project.engine.profile, commandId, kinds: ['test'], purpose: 'PROJECT-TESTS' });
+  } catch (err) {
+    return { id, status: 'not_tested', evidence: `Could not run "${commandId}": ${(err as Error).message}` };
+  }
+  const r = await runCommand(cmd, { CI: '1' });
+  if (r.error) return { id, status: 'not_tested', evidence: `${cmd.display} could not start: ${r.error}` };
+  if (r.timedOut) return { id, status: 'not_tested', evidence: `Timed out after ${cmd.timeoutMs} ms` };
+  return { id, status: r.code === 0 ? 'passed' : 'failed', evidence: `${cmd.display} exited ${r.code}: ${r.output.trim().split('\n').slice(-4).join(' / ')}` };
 }
 
 export async function verify(ctx: ToolContext, args: { projectPath?: string; decisionId?: string; checkIds?: string[]; sessionId?: string; runTests?: boolean; revert?: boolean }): Promise<ToolResult> {
@@ -418,59 +573,60 @@ export async function verify(ctx: ToolContext, args: { projectPath?: string; dec
     decision = loadDecisions(project.root).decisions.find((d) => d.decisionId === args.decisionId);
     if (!decision) throw new GameDNAError('NOT_FOUND', `Decision ${args.decisionId} not found`);
     if (!['selected', 'applied'].includes(decision.status)) throw new GameDNAError('INVALID_TRANSITION', `Decision ${decision.decisionId} is ${decision.status}`);
-    const target = (k: { from?: unknown; to: unknown }) => (args.revert ? k.from : k.to);
-    const mismatched = decision.parameterDiff.filter((d) => project.tuning[d.key] !== target(d));
-    checks.push({
-      id: args.revert ? 'PARAMS-REVERTED' : 'PARAMS-APPLIED',
-      status: mismatched.length ? 'failed' : 'passed',
-      evidence: mismatched.length ? `${project.record.tuningFile} differs: ${mismatched.map((d) => `${d.key}=${String(project.tuning[d.key])} (expected ${String(target(d))})`).join(', ')}` : `${project.record.tuningFile} holds every ${args.revert ? 'baseline' : 'selected'} value`,
-    });
-    // Effective runtime parameters: reload the page so the dev server serves the edited file.
-    if (session) {
-      await ctx.sessions.load(session, true);
-      const runtime = await session.page.evaluate(() => (window as unknown as { __GAMEDNA__: { getParameters(): Record<string, unknown> } }).__GAMEDNA__.getParameters(), undefined);
-      const off = decision.parameterDiff.filter((d) => runtime[d.key] !== target(d));
-      checks.push({ id: 'RUNTIME-PARAMS', status: off.length ? 'failed' : 'passed', evidence: off.length ? `Running game uses ${off.map((d) => `${d.key}=${String(runtime[d.key])}`).join(', ')}` : 'Running game reports the expected effective parameters' });
-    } else {
-      checks.push({ id: 'RUNTIME-PARAMS', status: 'not_tested', evidence: 'No browser session; the tuning file was checked directly.' });
-    }
   }
-
   const wanted = args.checkIds?.length ? args.checkIds : decision?.protectedChecks.length ? decision.protectedChecks : project.record.constraints.map((c) => c.id);
   const unknown = wanted.filter((id) => !project.record.constraints.some((c) => c.id === id));
   if (unknown.length) throw new GameDNAError('NOT_FOUND', `Unknown check(s): ${unknown.join(', ')}`);
   const revision = baselineRevision(project.root, project.record);
-  const scenarios = listScenarios(project.root).scenarios.filter((s) => s.assertions.some((a) => wanted.includes(a.checkId)));
-  const perCheck = new Map<string, VerifyCheck[]>();
-  for (const s of scenarios) {
-    try {
-      const ex = await executeScenario({ project, scenario: s, repeat: 2, session, revision });
-      const run = ex.runs[0]!;
-      for (const c of run.checks.filter((x) => wanted.includes(x.id))) {
-        const status: CheckStatus = c.status === 'passed' && ex.reproducibility.status === 'unstable' ? 'unstable' : c.status;
-        perCheck.set(c.id, [...(perCheck.get(c.id) ?? []), { id: c.id, status, evidence: `${s.id} (${ex.runtime}): ${c.observed ?? ''}`, traceId: ex.traceId }]);
-      }
-    } catch (err) {
-      // A tool failure is never a pass.
-      for (const id of new Set(s.assertions.map((a) => a.checkId).filter((x) => wanted.includes(x)))) {
-        perCheck.set(id, [...(perCheck.get(id) ?? []), { id, status: 'not_tested', evidence: `${s.id}: could not run (${(err as Error).message})` }]);
+
+  let acquired: AcquiredTarget | null = null;
+  let targetError: string | null = null;
+  try {
+    acquired = await acquireTarget(ctx, project, session);
+  } catch (err) {
+    targetError = (err as Error).message;
+  }
+  const target = acquired?.target ?? null;
+  try {
+    if (decision) {
+      const expected = (k: { from?: unknown; to: unknown }) => (args.revert ? k.from : k.to);
+      const mismatched = decision.parameterDiff.filter((d) => project.tuning[d.key] !== expected(d));
+      checks.push({
+        id: args.revert ? 'PARAMS-REVERTED' : 'PARAMS-APPLIED',
+        status: mismatched.length ? 'failed' : 'passed',
+        evidence: mismatched.length ? `${project.record.tuningFile} differs: ${mismatched.map((d) => `${d.key}=${String(project.tuning[d.key])} (expected ${String(expected(d))})`).join(', ')}` : `${project.record.tuningFile} holds every ${args.revert ? 'baseline' : 'selected'} value`,
+      });
+      checks.push(await runtimeParamsCheck(ctx, target, targetError, decision, Boolean(args.revert)));
+    }
+
+    const scenarios = listScenarios(project.root).scenarios.filter((s) => s.assertions.some((a) => wanted.includes(a.checkId)));
+    const perCheck = new Map<string, VerifyCheck[]>();
+    for (const s of scenarios) {
+      try {
+        if (!target) throw new Error(targetError ?? 'no target');
+        const ex = await executeScenario({ project, scenario: s, repeat: 2, target, revision });
+        const run = ex.runs[0]!;
+        for (const c of run.checks.filter((x) => wanted.includes(x.id))) {
+          const status: CheckStatus = c.status === 'passed' && ex.reproducibility.status === 'unstable' ? 'unstable' : c.status;
+          perCheck.set(c.id, [...(perCheck.get(c.id) ?? []), { id: c.id, status, evidence: `${s.id} (${ex.runtime}): ${c.observed ?? ''}`, traceId: ex.traceId }]);
+        }
+      } catch (err) {
+        // A tool failure is never a pass.
+        for (const id of new Set(s.assertions.map((a) => a.checkId).filter((x) => wanted.includes(x)))) {
+          perCheck.set(id, [...(perCheck.get(id) ?? []), { id, status: 'not_tested', evidence: `${s.id}: could not run (${(err as Error).message})` }]);
+        }
       }
     }
-  }
-  for (const id of wanted) {
-    const list = perCheck.get(id);
-    if (!list) checks.push({ id, status: 'not_tested', evidence: 'No scenario asserts this check. Add one under .gamedna/scenarios/.' });
-    else checks.push({ id, status: worstStatus(list.map((l) => l.status)), evidence: list.map((l) => l.evidence).join(' | '), ...(list[0]?.traceId ? { traceId: list[0].traceId } : {}) });
+    for (const id of wanted) {
+      const list = perCheck.get(id);
+      if (!list) checks.push({ id, status: 'not_tested', evidence: 'No scenario asserts this check. Add one under .gamedna/scenarios/.' });
+      else checks.push({ id, status: worstStatus(list.map((l) => l.status)), evidence: list.map((l) => l.evidence).join(' | '), ...(list[0]?.traceId ? { traceId: list[0].traceId } : {}) });
+    }
+  } finally {
+    await acquired?.release();
   }
 
-  if (args.runTests !== false) {
-    const cmd = Object.values(project.record.commands).find((c) => c.kind === 'test');
-    if (!cmd) checks.push({ id: 'PROJECT-TESTS', status: 'not_tested', evidence: 'No test command declared in project.json' });
-    else {
-      const r = await runTestCommand(project.root, cmd.script, cmd.timeoutMs);
-      checks.push({ id: 'PROJECT-TESTS', status: r.timedOut ? 'not_tested' : r.code === 0 ? 'passed' : 'failed', evidence: r.timedOut ? `Timed out after ${cmd.timeoutMs} ms` : `npm run ${cmd.script} exited ${r.code}: ${r.output.trim().split('\n').slice(-4).join(' / ')}` });
-    }
-  }
+  if (args.runTests !== false) checks.push(await projectTestsCheck(project));
 
   const overall = worstStatus(checks.map((c) => c.status));
   let decisionStatus: string | null = null;
@@ -488,7 +644,7 @@ export async function verify(ctx: ToolContext, args: { projectPath?: string; dec
     saveDecisions(project.root, upsertDecision(loadDecisions(project.root), d));
     decisionStatus = d.status;
   }
-  return ok({ status: overall, verified: overall === 'passed', decisionId: decision?.decisionId ?? null, decisionStatus, revision, runtime: session ? 'browser' : 'headless-node', checks });
+  return ok({ status: overall, verified: overall === 'passed', decisionId: decision?.decisionId ?? null, decisionStatus, revision, runtime: target?.runtime ?? null, checks });
 }
 
 // ------------------------------------------------------------------ gd_export_report
@@ -507,13 +663,12 @@ export function exportReport(ctx: ToolContext, args: { projectPath?: string; tra
     runs.push({ traceId: id, scenarioId: t.run.scenarioId, seed: t.run.seed, status: t.run.status, revision: t.run.revision, params: t.run.params, checks: t.run.checks, metrics: [], limitations: t.run.limitations });
   }
   const manifest = readManifest(project.root);
-  const engine = detectEngine(project.root, readPackage(project.root));
   const md = renderReport({
     projectId: project.record.projectId,
     projectName: project.record.name,
     generatedAt: ctx.now(),
     revision: baselineRevision(project.root, project.record),
-    engine: `phaser ${engine.version}`,
+    engine: `${project.engine.profile.id} ${project.engine.version}`,
     runs,
     experiments: listExperiments(project.root),
     decisions: loadDecisions(project.root).decisions,
@@ -530,4 +685,62 @@ export function exportReport(ctx: ToolContext, args: { projectPath?: string; tra
   const jsonRel = path.posix.join('.gamedna/reports', `report-${stamp}.json`);
   writeJsonAtomic(resolveInside(project.root, jsonRel), { generatedAt: ctx.now(), runs, decisions: loadDecisions(project.root).decisions, assets: manifest.assets });
   return ok({ report: mdRel, json: jsonRel, runs: runs.length, sanitized: 'Reports contain project-relative paths, parameters, check results and hashes only. No environment variables, tokens or absolute paths.' });
+}
+
+// ------------------------------------------------------------------ gd_install_adapter
+
+function listFiles(dir: string, prefix = ''): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const rel = prefix ? `${prefix}/${e.name}` : e.name;
+    if (e.isDirectory()) return listFiles(path.join(dir, e.name), rel);
+    return e.isFile() ? [rel] : [];
+  });
+}
+
+export function installAdapter(ctx: ToolContext, args: { projectPath?: string; overwrite?: boolean }): ToolResult {
+  const root = resolveInside(ctx.workspaceRoot, args.projectPath ?? '.');
+  const { profile } = engineAt(root);
+  const spec = profile.adapter;
+  if (!spec) {
+    throw new GameDNAError('ADAPTER_MISSING', `No ${profile.label} adapter ships with this GameDNA version yet`, {
+      ...(profile.id === 'custom' ? { fix: 'A custom engine implements bridge protocol v1 itself (.kiro/specs/gamedna-engines/design.md section 3).' } : {}),
+    });
+  }
+  const note = 'GameDNA never edits game code. Add each wiring line yourself, then start a session.';
+  if (spec.kind === 'package') {
+    return ok({ engine: profile.id, filesWritten: [], unchanged: [], package: spec.package, marker: spec.marker, installed: adapterStatus(root, profile).installed, wiring: adapterStatus(root, profile).wiring, note: `Add "${spec.package}" as a devDependency and create ${spec.marker} (see power/skills/playtesting/SKILL.md). ${note}` });
+  }
+  const adapters = adaptersRoot();
+  const source = adapters ? path.join(adapters, ...spec.source.split('/')) : null;
+  if (!source || !existsSync(source) || !statSync(source).isDirectory()) {
+    throw new GameDNAError('ADAPTER_MISSING', `The ${profile.label} adapter sources are not in this GameDNA install`, { details: { expected: `power/adapters/${spec.source}` }, fix: 'Reinstall the GameDNA Power, or set GAMEDNA_ADAPTERS to the power/adapters folder.' });
+  }
+  const plan = listFiles(source).map((rel) => {
+    const file = path.posix.join(spec.target, rel);
+    const dest = resolveInside(root, file);
+    const bytes = readFileSync(path.join(source, ...rel.split('/')));
+    const current = existsSync(dest) ? readFileSync(dest) : null;
+    return { file, dest, bytes, state: current === null ? 'new' : current.equals(bytes) ? 'same' : 'differs' };
+  });
+  const conflicts = plan.filter((p) => p.state === 'differs').map((p) => p.file);
+  if (conflicts.length && !args.overwrite) {
+    throw new GameDNAError('PERMISSION_DENIED', `${conflicts.length} adapter file(s) already exist with different content`, { details: { files: conflicts }, fix: 'Pass overwrite: true to replace them with the shipped adapter.' });
+  }
+  for (const p of plan) if (p.state !== 'same') writeFileAtomic(p.dest, p.bytes);
+  return ok({
+    engine: profile.id,
+    target: spec.target,
+    filesWritten: plan.filter((p) => p.state !== 'same').map((p) => p.file),
+    overwritten: conflicts,
+    unchanged: plan.filter((p) => p.state === 'same').map((p) => p.file),
+    marker: spec.marker,
+    wiring: adapterStatus(root, profile).wiring,
+    note,
+  });
+}
+
+// ------------------------------------------------------------------ gd_configure_tool
+
+export function configureTool(args: { tool: string; path: string | null }): ToolResult {
+  return ok({ ...setToolPath(args.tool, args.path), note: 'Stored in the user config folder, never in a game repository.' });
 }
