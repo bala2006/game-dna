@@ -4,7 +4,10 @@
 
 GameDNA turns Kiro into a specialist game developer for Phaser games. It is a Kiro Power with a local MCP server that gives Kiro game-design skills, procedural art and sound, the ability to watch and replay a running game, and playable A/B/C experiments where **you** choose the result. Kiro then applies your choice to normal game source and verifies that the game's protected rules still hold.
 
-Built for **Kiroween 2026** (Skeleton Crew category): two different games, `apps/gravity-shift` and `apps/neon-survivor`, built on one shared starter, `packages/starter`.
+Built for **Kiroween 2026** (Skeleton Crew category) on two reusable foundations:
+
+- `packages/starter`, the lean 2D skeleton behind two Phaser games, `apps/gravity-shift` and `apps/neon-survivor`.
+- `packages/kit`, the **GameDNA Kit**: tested code for 3D browser games (input on every device, camera views, cars and people at real proportions, terrain and roads, a lit three.js stage, a fixed-step loop). Two different three.js games, `apps/ridgeline-racer` and `apps/trail-walk`, are built only on it. See [packages/kit/README.md](packages/kit/README.md).
 
 ![Gravity Shift](docs/images/gravity-shift.png)
 
@@ -26,15 +29,18 @@ flowchart TD
 
 | Path | What it is |
 |---|---|
-| `power/` | The Kiro Power: `plugin.json`, `mcp.json`, six skills (game direction, game feel, technical art, level design, playtesting, refinement) and the bundled server |
+| `power/` | The Kiro Power: `plugin.json`, `mcp.json`, 20 skills (`gamedna-mode`, the entry point that routes each step to one skill, plus game direction, art direction, world building, level design, character design, vehicle design, controls and input, camera, motion and physics, game feel, game mechanics, feedback and UI, light and color, pacing and guidance, polish and detail, technical art, three.js, playtesting and refinement) the bundled server, and `kit/`, a copy of the GameDNA Kit source for games outside this repository |
 | `packages/mcp` | 15 MCP tools: project status, style packs, design validation, asset generation, sessions, observation, scenarios, experiments, selection, change preparation, verification, reports |
 | `packages/core` | Schemas, deterministic scenario runner, assertions, trace comparison, metrics, experiments and decisions |
 | `packages/assets` | Three style packs and seeded generators for sprites, tiles, backgrounds, icons, particles and sound effects |
 | `packages/phaser-adapter` | Development-only bridge (`window.__GAMEDNA__`), never in production builds |
-| `packages/starter` | The shared lean game skeleton: fixed-step simulation base and Phaser scene glue |
+| `packages/starter` | The shared lean 2D game skeleton: fixed-step simulation base and Phaser scene glue |
+| `packages/kit` | The GameDNA Kit for 3D games: `random`, `loop`, `input`, `camera`, `vehicle`, `character`, `world` and `stage` modules |
 | `packages/workbench` | Local comparison UI |
 | `apps/gravity-shift` | Gravity-reversing puzzle platformer, layered-minimal style |
 | `apps/neon-survivor` | Top-down wave survival, neon-arcade style |
+| `apps/ridgeline-racer` | three.js circuit racer: four camera views, keyboard, mouse, gamepad and touch pedals, three laps, an automatic driver |
+| `apps/trail-walk` | three.js walk-and-collect game: third and first person, jump and run, eight markers to find |
 
 ![Neon Survivor](docs/images/neon-survivor.png)
 
@@ -45,11 +51,13 @@ flowchart TD
 ```bash
 npm install
 npx playwright install chromium
-npm test            # 113 unit, property and scenario tests
-npm run test:e2e    # 7 browser end-to-end tests (after npm run build)
-npm run build       # workbench, Power bundle, both games, bridge check
+npm test            # 232 unit, property and scenario tests
+npm run test:e2e    # browser end-to-end tests of the MCP server and all four games (after npm run build)
+npm run build       # workbench, Power bundle, all four games, bridge check
 npm run dev -w gravity-shift   # http://127.0.0.1:5173
 npm run dev -w neon-survivor   # http://127.0.0.1:5174
+npm run dev -w ridgeline-racer # http://127.0.0.1:5175
+npm run dev -w trail-walk      # http://127.0.0.1:5176
 ```
 
 Open the folder in Kiro: `.kiro/settings/mcp.json` starts the GameDNA server. Then ask, for example, "Use GameDNA to make Gravity Shift's jump feel better and let me choose." Full instructions: [docs/INSTALL.md](docs/INSTALL.md).
