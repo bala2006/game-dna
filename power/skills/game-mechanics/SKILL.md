@@ -1,74 +1,58 @@
 ---
 name: game-mechanics
-description: Systems that force decisions. Loop phases, risk shown before commitment, capacity limits, graded consequences, several solutions, clue-to-lock progress. Use when a game lacks depth or tension, or when adding an economy, alert, stealth or puzzle system.
+description: Rules players act through. Core loop, verbs, protected rules, combat, progression, inventory, equipment, rewards, economy, difficulty, quests, dialogue and objectives. Use when deciding what players do and how the game answers. Not for hit feedback (game-feel), enemy behavior (enemy-ai) or tutorials (pacing-and-onboarding).
+license: MIT
+metadata:
+  owner: gameplay
+  topics: core loop, player actions, game rules, combat, progression, inventory, equipment, rewards, economy, difficulty balancing, quests, dialogue, objectives
+  engines: portable
+  kit: kit/inventory, kit/random, kit/events, kit/contracts, starter, core
 ---
 
 # Game mechanics
 
-A mechanic earns its place when it forces a choice. Start from the game-direction skill for the core loop. This skill builds the systems that make the loop worth repeating.
+## Scope
 
-## Step 1: Model the loop as phases
+Owns what the player can do, what the rules answer, and the numbers behind both. When the question is how a hit feels (flash, hit-stop, shake), use `game-feel`; for how enemies decide, use `enemy-ai`; for the order players meet mechanics, use `pacing-and-onboarding`; for where rule code lives and how it is saved, use `game-architecture`.
 
-Write the loop as phases with entry and exit conditions, for example `prepare`, `commit`, `pressure`, `release`, `payoff`.
+## Decisions
 
-- Store the phase as one field in the simulation. One transition function changes it.
-- Each phase needs a different pace and mood. Change the sound bed, light and camera distance per phase (feedback-and-ui, light-and-color and camera skills).
-- Each transition gets a scenario that asserts the phase with `stateAtEnd`.
+- **Core loop in one line**: verb, challenge, reward, repeat. Two to four verbs in a first slice, each needed in every level.
+- **Rules have ids and tests.** Each must-never-break rule is a statement with an id (`CD-01` one attack per cooldown, `SCORE-01` a kill scores once, `HP-01` health never below 0). Its numbers live in the tuning file; a seeded fault parameter proves its scenario catches the bug.
+- **Combat runs in ticks.** Light attacks wind up 3 to 6 ticks at 60 Hz, heavy ones 15 to 30. Cooldown counts from the attack, not from key release (Neon Survivor: 320 ms, 20 ticks). Player invulnerability after a hit lasts 0.5 to 1 s (Neon Survivor 700 ms). Each hit carries a `hitId` of tick and target so one swing damages a target once. Frame data and time-to-kill bands are in `references/balance.md`.
+- **Derived stats are recomputed** from base plus equipment on every change: flat bonuses, then percentages summed within a category, then categories multiplied. Never add on equip and subtract on unequip.
+- **Rewards.** Show the range before commitment and keep the result inside it. Drops come from `weightedPick` on a loot stream from `deriveSeed(seed, 'loot')`, with a pity counter: a 5 percent drop still misses 40 times in a row for 13 percent of players.
+- **Economy.** List every faucet and sink with its rate per minute; faucets above sinks inflate prices. Currency and counts are integers, and carried value has a capped rule with an id.
+- **Difficulty.** Change one knob at a time (counts, speeds, windups, spawn gaps) and judge it over 20 or more seeded runs. Dynamic difficulty stays within 10 to 20 percent and never hides behind invisible stat boosts.
+- **Quests, objectives and dialogue are data.** Quest steps are conditions on gameplay events with rewards; dialogue is a graph whose choices carry conditions, flag effects and a `next`. One main objective is always visible, with at most three optional ones. Shapes are in `references/quests-and-dialogue.md`.
 
-## Step 2: Pick decision patterns
+## Mistakes
 
-Use one or two patterns per slice. Each creates a choice and needs a rule that must never break.
+- One swing scores a kill twice: damage applied twice with no `alive` guard (Neon Survivor's `fault.duplicateDamage`).
+- Damage output follows mash speed: the cooldown is checked per press or per frame.
+- Stats drift after unequipping or loading: equipment applied by increments.
+- The same seed drops different loot after an AI change: loot shares the AI's stream.
+- Quest progress never advances in headless tests: it counts UI or render events.
+- One weapon or route always wins: no simulated comparison across options.
 
-| Pattern | The choice it creates | Same pattern in other games | Rule to protect |
-|---|---|---|---|
-| Risk shown before commitment: risk level, reward range, requirement | Which challenge, and when | A door shows its difficulty and reward tier; a puzzle shows its par | The real reward stays inside the shown range |
-| Carry limit: gains are safe only once secured | Push on or secure it now | Run currency kept only at camp; cargo that fills a hold | Carried value never exceeds capacity |
-| Graded, delayed response: pressure rises in steps and the world answers after a delay | Act fast or act quietly | A creature that hunts by noise; a storm front; an alarm | No response fires before the delay |
-| Counterplay in layers: several ways to lower pressure | Which tool to spend | Hide, change route, use a decoy | A trivial action lowers nothing |
-| Several solutions: a quiet one found by exploring, a loud one that costs pressure or resources | Time against risk | Find the key or break the wall; sneak past or fight | Both work; only the loud one raises pressure |
-| Clue to lock: the lock opens only with a found clue | Where to search | A symbol order painted on a mural; a combination in a diary | No open without the clue |
-| Safety is a place: leave the danger area and stay out for a hold time | Which route | Outrun a storm; break line of sight and hide | Pressure clears only after the full hold outside |
-| Variation on a template: each instance adds or removes one option | A new plan per instance | Each floor removes one exit; each island adds one hazard | No two instances share the same option set |
+## Reuse
 
-## Step 3: Make consequences readable
+- `@gamedna/kit/inventory`: `createInventory({ items, slots, maxWeight })`; `add` returns what did not fit; `room`, `move`, `split`, `toJSON`, `load`.
+- `@gamedna/kit/random`: `weightedPick`, `shuffle`, `deriveSeed`, `createRng`.
+- `@gamedna/kit/events`: `createEventQueue`, with quest progress subscribed through `on`.
+- `@gamedna/kit/contracts`: `ticksFor`. `@gamedna/starter`: `msToTicks`, `num`, `flag` for tuning and seeded faults.
+- `@gamedna/core`: `runScenario` with `eventCount`, `stateAlways`, `minEventInterval` and `eventUnique`; `computeMetrics` for `combat.minAttackInterval`.
 
-- Use 3-5 grades, not on and off. Each grade changes something the player can see, such as more pursuers or a wider danger area.
-- The delay must feel caused. Use 1-3 s after a loud act and longer for slow buildup. Name the cause in the notice.
-- Every rising state has a visible way down and a clear end message.
-- The game stores what the player found. Pin found answers and goals until they are used. Finding is the challenge; remembering is not.
+The game keeps its rules, numbers and content.
 
-## Step 4: Write the rules down
+## Engines
 
-Add each rule to `.gamedna/project.json` `constraints` with an ID and put its numbers in the tuning file:
-
-- `CAP-01` Carried value never exceeds `inventory.capacity`.
-- `PRESSURE-01` A response never fires before `pressure.responseDelayMs` after the triggering act.
-- `LOCK-01` A lock never opens without its clue or its loud solution.
-
-Mark rule parameters `"protected": true`. Then call `gd_validate_design`.
+Portable only: rules run in the simulation and read the same under every engine. When wiring them into an engine, use `threejs-kit` or `phaser-starter` for the project's engine.
 
 ## Verify
 
-| Rule | Scenario and assertion |
-|---|---|
-| Capacity | Collect past the cap; `stateAlways` on `carried` with `lte` and the capacity |
-| Delay | One scenario ends just before the delay with `eventCount` of `response` eq 0; another ends after with eq 1 |
-| Clue to lock | Try the lock with no clue; `eventCount` of `lockOpen` eq 0 |
-| Several solutions | One scenario per solution; both `lockOpen` eq 1; `stateAtEnd` on `pressure.level` differs |
-| Reward range | Call `gd_run_scenario` with several `seed` values; `stateAtEnd` reward within the shown bounds each time |
-| Template variation | A unit test over level data that compares option sets |
-
-Run `gd_verify` after every rule change.
-
-## Anti-patterns
-
-- A dominant solution. If one path is always best, cut it or give it a cost.
-- Hidden penalties. Every consequence shows its cause.
-- Memory chores. Store found information for the player.
-- Several new systems at once. Add one, playtest it, then add the next.
-
-## Sources
-
-- Adams and Dormans, *Game Mechanics: Advanced Game Design* (2012): feedback loops and internal economies.
-- Hunicke, LeBlanc and Zubek, "MDA: A Formal Approach to Game Design and Game Research" (AAAI workshop, 2004).
-- Cook, "The Chemistry of Game Design" (Gamasutra, 2007): skill atoms and loops.
+- Cooldown: hold attack every tick; `minEventInterval` on `attack` with `minMsFromParam: 'attack.cooldownMs'`.
+- Score once: `eventUnique` on `score` keyed by `enemyId`. Health floor: `stateAlways` on `player.health` with `gte` 0.
+- Each rule's scenario fails with its fault parameter on (`detectsFault`).
+- Economy and difficulty: 20 headless seeds keep currency per minute and clear rate in their bands.
+- Content: a unit test resolves every quest condition, reward id and dialogue `next`.

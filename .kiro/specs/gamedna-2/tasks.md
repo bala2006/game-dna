@@ -11,7 +11,7 @@ Requirements: `requirements.md`. Design: `design.md`. A task is checked only whe
 - [x] 7. Kit gameplay modules: state machine, behavior tree, utility AI, steering, A*, events, saves, inventory, rooms (Req 4)
 - [x] 8. Kit runtime modules: pool, frame budget, feedback timers, three.js disposal (Req 4)
 - [x] 9. Demo games adopt the new modules and declare contracts (Req 3.3, 4.3)
-- [ ] 10. Replace the 20 skills with the 25-skill set (Req 5)
+- [x] 10. Replace the 20 skills with the 25-skill set (Req 5)
 - [ ] 11. Director and specialist agents, delegation formats, scope check, installer (Req 6)
 - [ ] 12. Knowledge validator in CI (Req 7)
 - [ ] 13. Evaluation dataset, scorer, prompt builder and a recorded run (Req 8)
