@@ -1,0 +1,347 @@
+{
+  "cases": 297,
+  "missingPredictions": 0,
+  "precision": 0.938,
+  "recall": 0.98,
+  "f1": 0.958,
+  "exactSetAccuracy": 0.946,
+  "nearMissRejection": 1,
+  "forbiddenAvoidance": 0.993,
+  "combinedExact": 0.815,
+  "midTaskExact": 0.926,
+  "pivotExact": 1,
+  "crossSpecialistExact": 0.926,
+  "engineMismatchRate": 0,
+  "unnecessaryLoads": 13,
+  "missedLoads": 4,
+  "repeatedReads": 6,
+  "specialistAccuracy": 0.993,
+  "moduleRecall": 0.911,
+  "moduleCaseDiscovery": 0.896,
+  "perCategory": {
+    "combined": {
+      "cases": 27,
+      "exact": 0.815,
+      "tp": 55,
+      "fp": 5,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "cross-specialist": {
+      "cases": 27,
+      "exact": 0.926,
+      "tp": 5,
+      "fp": 1,
+      "fn": 2,
+      "specialistRight": 0.963
+    },
+    "engine": {
+      "cases": 27,
+      "exact": 0.889,
+      "tp": 22,
+      "fp": 2,
+      "fn": 1,
+      "specialistRight": 1
+    },
+    "explicit": {
+      "cases": 27,
+      "exact": 1,
+      "tp": 19,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "implicit": {
+      "cases": 27,
+      "exact": 0.926,
+      "tp": 17,
+      "fp": 1,
+      "fn": 1,
+      "specialistRight": 1
+    },
+    "mid-task": {
+      "cases": 27,
+      "exact": 0.926,
+      "tp": 17,
+      "fp": 2,
+      "fn": 0,
+      "specialistRight": 0.963
+    },
+    "near-miss": {
+      "cases": 27,
+      "exact": 1,
+      "tp": 9,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "no-skill": {
+      "cases": 27,
+      "exact": 1,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "pivot": {
+      "cases": 27,
+      "exact": 1,
+      "tp": 22,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "project-context": {
+      "cases": 27,
+      "exact": 0.963,
+      "tp": 14,
+      "fp": 1,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "reuse": {
+      "cases": 27,
+      "exact": 0.963,
+      "tp": 15,
+      "fp": 1,
+      "fn": 0,
+      "specialistRight": 1
+    }
+  },
+  "failures": [
+    {
+      "id": "dev-implicit-010",
+      "category": "implicit",
+      "role": "director",
+      "expected": [
+        "game-feel"
+      ],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-implicit-024",
+      "category": "implicit",
+      "role": "gamedna-experience",
+      "expected": [
+        "audio-design"
+      ],
+      "got": [
+        "audio-design",
+        "phaser-starter"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-combined-001",
+      "category": "combined",
+      "role": "director",
+      "expected": [
+        "camera-systems",
+        "vehicle-dynamics",
+        "input-and-controls"
+      ],
+      "got": [
+        "gamedna-director",
+        "camera-systems",
+        "vehicle-dynamics",
+        "input-and-controls"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-combined-003",
+      "category": "combined",
+      "role": "director",
+      "expected": [
+        "phaser-starter",
+        "input-and-controls"
+      ],
+      "got": [
+        "gamedna-director",
+        "phaser-starter",
+        "input-and-controls"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-combined-004",
+      "category": "combined",
+      "role": "director",
+      "expected": [
+        "threejs-kit",
+        "enemy-ai"
+      ],
+      "got": [
+        "gamedna-director",
+        "threejs-kit",
+        "enemy-ai"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-combined-005",
+      "category": "combined",
+      "role": "director",
+      "expected": [
+        "world-generation",
+        "game-architecture"
+      ],
+      "got": [
+        "gamedna-director",
+        "world-generation",
+        "game-architecture"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-combined-009",
+      "category": "combined",
+      "role": "director",
+      "expected": [
+        "enemy-ai",
+        "hud-and-menus"
+      ],
+      "got": [
+        "gamedna-director",
+        "enemy-ai",
+        "hud-and-menus"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-engine-001",
+      "category": "engine",
+      "role": "director",
+      "expected": [
+        "threejs-kit"
+      ],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-engine-013",
+      "category": "engine",
+      "role": "gamedna-simulation",
+      "expected": [
+        "phaser-starter"
+      ],
+      "got": [
+        "phaser-starter",
+        "fixed-step-simulation"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-engine-022",
+      "category": "engine",
+      "role": "gamedna-experience",
+      "expected": [
+        "phaser-starter"
+      ],
+      "got": [
+        "hud-and-menus",
+        "phaser-starter"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-project-context-004",
+      "category": "project-context",
+      "role": "director",
+      "expected": [],
+      "got": [
+        "gamedna-director"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": "gamedna-gameplay",
+      "gotSpecialist": "gamedna-gameplay"
+    },
+    {
+      "id": "dev-reuse-018",
+      "category": "reuse",
+      "role": "gamedna-motion",
+      "expected": [],
+      "got": [
+        "vehicle-design"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-mid-task-004",
+      "category": "mid-task",
+      "role": "gamedna-visual",
+      "expected": [],
+      "got": [
+        "performance-budgets"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": "gamedna-performance",
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-mid-task-020",
+      "category": "mid-task",
+      "role": "gamedna-experience",
+      "expected": [],
+      "got": [
+        "input-and-controls"
+      ],
+      "forbiddenHit": [
+        "input-and-controls"
+      ],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "dev-cross-specialist-007",
+      "category": "cross-specialist",
+      "role": "gamedna-world",
+      "expected": [
+        "level-design"
+      ],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": "gamedna-simulation"
+    },
+    {
+      "id": "dev-cross-specialist-026",
+      "category": "cross-specialist",
+      "role": "gamedna-quality",
+      "expected": [
+        "level-design"
+      ],
+      "got": [
+        "character-movement"
+      ],
+      "forbiddenHit": [
+        "character-movement"
+      ],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    }
+  ]
+}

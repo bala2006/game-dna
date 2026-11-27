@@ -1,0 +1,32 @@
+[
+  {
+    "batch": "all-01",
+    "cases": 34,
+    "headerTokens": 4016
+  },
+  {
+    "batch": "all-02",
+    "cases": 34,
+    "headerTokens": 4016
+  },
+  {
+    "batch": "all-03",
+    "cases": 34,
+    "headerTokens": 4016
+  },
+  {
+    "batch": "all-04",
+    "cases": 34,
+    "headerTokens": 4016
+  },
+  {
+    "batch": "all-05",
+    "cases": 34,
+    "headerTokens": 4016
+  },
+  {
+    "batch": "all-06",
+    "cases": 28,
+    "headerTokens": 4016
+  }
+]

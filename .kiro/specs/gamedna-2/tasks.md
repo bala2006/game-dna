@@ -14,7 +14,7 @@ Requirements: `requirements.md`. Design: `design.md`. A task is checked only whe
 - [x] 10. Replace the 20 skills with the 25-skill set (Req 5)
 - [x] 11. Director and specialist agents, delegation formats, scope check, installer (Req 6)
 - [x] 12. Knowledge validator in CI (Req 7)
-- [ ] 13. Evaluation dataset, scorer, prompt builder and a recorded run (Req 8)
-- [ ] 14. Benchmark protocol and rubric (Req 8.4)
+- [x] 13. Evaluation dataset, scorer, prompt builder and a recorded run (Req 8)
+- [x] 14. Benchmark protocol and rubric (Req 8.4); configuration 2 and the blind review not yet run
 - [ ] 15. README, install guide, capability catalog, originality and dependency docs, CI (Req 9)
 - [ ] 16. Push the branch and open the pull request (Req 9.1)
