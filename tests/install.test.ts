@@ -35,6 +35,7 @@ describe('install.mjs', () => {
     expect(r.conflicts).toEqual([]);
     expect(existsSync(path.join(root, '.kiro/agents/gamedna-director.md'))).toBe(true);
     expect(existsSync(path.join(root, '.kiro/skills/gamedna-director/scripts/fingerprint.mjs'))).toBe(true);
+    expect(readFileSync(path.join(root, '.kiro/steering/gamedna.md'), 'utf8')).toMatch(/^---\ninclusion: always\n---/);
     for (const f of readdirSync(path.join(root, '.kiro/agents'))) {
       const text = readFileSync(path.join(root, '.kiro/agents', f), 'utf8');
       for (const m of text.matchAll(/(?:skill|file):\/\/(\.kiro\/skills\/[^\s]+)/g)) expect(existsSync(path.join(root, m[1]!)), `${f} -> ${m[1]}`).toBe(true);
@@ -101,7 +102,7 @@ describe('install.mjs', () => {
     install(root, { sourceRoot: repo });
     // Mirror the installed layout back into a validator root: skills under power/skills, agents under integration.
     const mirror = path.join(tmp, 'mirror');
-    for (const [from, to] of [['.kiro/skills', 'power/skills'], ['.kiro/agents', 'integration/kiro/agents']] as const) {
+    for (const [from, to] of [['.kiro/skills', 'power/skills'], ['.kiro/agents', 'integration/kiro/agents'], ['.kiro/steering', 'integration/kiro/steering']] as const) {
       const walk = (d: string): string[] => readdirSync(path.join(root, from, d), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
       for (const rel of walk('')) {
         mkdirSync(path.dirname(path.join(mirror, to, rel)), { recursive: true });

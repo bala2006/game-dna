@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Installs GameDNA into a game project for Kiro: skills into .kiro/skills/, the Director and
-// specialist agents into .kiro/agents/, and optionally the Kit source into src/kit/. Kiro Powers
+// specialist agents into .kiro/agents/, one short steering file, and optionally the Kit source into src/kit/. Kiro Powers
 // carry skills only, and custom agents can only reference skills by path, so agents need these
 // workspace copies. Dependency-free; runs on Node 18 or later.
 //
@@ -40,6 +40,9 @@ export function plan(sourceRoot = SOURCE_ROOT, { agents = true, kit = false } = 
   if (agents) {
     const agentsDir = path.join(sourceRoot, 'integration', 'kiro', 'agents');
     for (const rel of walk(agentsDir)) if (rel.endsWith('.md')) files.push({ from: path.join(agentsDir, rel), to: `.kiro/agents/${rel}` });
+    // Kiro Web runs custom agents only as sub-agents; this always-on steering points the main agent at the Director skill.
+    const steering = path.join(sourceRoot, 'integration', 'kiro', 'steering', 'gamedna.md');
+    if (existsSync(steering)) files.push({ from: steering, to: '.kiro/steering/gamedna.md' });
   }
   if (kit) {
     const kitDir = path.join(sourceRoot, 'power', 'kit', 'src');

@@ -365,6 +365,15 @@ export function validate(root, { compile = true, tsc: tscPath } = {}) {
     }
   }
 
+  // Installed steering: short, always-on, and naming only real skills.
+  const steeringDir = path.join(root, 'integration', 'kiro', 'steering');
+  if (existsSync(steeringDir)) for (const f of readdirSync(steeringDir).filter((x) => x.endsWith('.md'))) {
+    const file = path.join(steeringDir, f), text = read(file), fm = parseFrontmatter(text);
+    if (!['always', 'auto', 'manual', 'fileMatch'].includes(fm.data?.inclusion)) add(file, 'steering', 'inclusion must be always, auto, manual or fileMatch');
+    if (fm.data?.inclusion === 'always' && tokens(fm.body) > 200) add(file, 'steering', `always-on steering is about ${tokens(fm.body)} tokens; keep it under 200`);
+    for (const m of fm.body.matchAll(/`([a-z0-9]+(?:-[a-z0-9]+)+)`/g)) if (!names.has(m[1]) && !m[1].startsWith('gamedna-') && !agentNames.has(m[1])) add(file, 'steering', `names "${m[1]}", which is not a skill or agent`);
+  }
+
   // Compile-checked code samples.
   if (compile && compileBlocks.length) {
     const dir = path.join(root, '.scratch', 'knowledge-check');
