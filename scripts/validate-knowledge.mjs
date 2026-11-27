@@ -194,7 +194,7 @@ export function loadAgents(root) {
     const file = path.join(dir, f);
     const text = read(file);
     const fm = parseFrontmatter(text);
-    return { file, name: f.replace(/\.md$/, ''), fm: fm.data ?? {}, fmErrors: fm.errors, body: fm.body };
+    return { file, name: f.replace(/\.md$/, ''), fm: fm.data ?? {}, fmErrors: fm.errors, body: fm.body, raw: fm.raw };
   });
 }
 
@@ -323,6 +323,8 @@ export function validate(root, { compile = true, tsc: tscPath } = {}) {
     }
     if (fm.name !== a.name) add(a.file, 'agent', `name "${fm.name}" must equal the file name "${a.name}"`);
     if (typeof fm.description !== 'string' || fm.description.length < 40) add(a.file, 'agent', 'description must say when to delegate to this agent');
+    const rawDesc = (a.raw ?? '').match(/^description:\s*(.*)$/m)?.[1] ?? '';
+    if (/: | #/.test(rawDesc) && !/^["'].*["']$/.test(rawDesc)) add(a.file, 'agent', 'description contains ": " or " #" and must be quoted');
     const tools = list(fm.tools);
     const isDirector = a.name === 'gamedna-director';
     for (const t of tools) {
@@ -340,6 +342,8 @@ export function validate(root, { compile = true, tsc: tscPath } = {}) {
         else if (!discoveredBy.has(sk[1])) discoveredBy.set(sk[1], [a.name]);
         else discoveredBy.get(sk[1]).push(a.name);
       } else if (r.startsWith('file://')) {
+        const own = r.match(/^file:\/\/\.kiro\/skills\/([a-z0-9-]+)\/SKILL\.md$/);
+        if (own && names.has(own[1])) { if (!discoveredBy.has(own[1])) discoveredBy.set(own[1], [a.name]); else discoveredBy.get(own[1]).push(a.name); }
         const p = r.slice('file://'.length).replace(/^\.kiro\/skills\//, 'power/skills/').replace(/^\.kiro\/agents\//, 'integration/kiro/agents/');
         if (!p.includes('*') && !existsSync(path.join(root, p))) add(a.file, 'agent', `resource "${r}" does not resolve`);
       } else add(a.file, 'agent', `resource "${r}" must use skill:// or file://`);
