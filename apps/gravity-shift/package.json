@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@gamedna/core": "*",
+    "@gamedna/kit": "*",
     "@gamedna/starter": "*",
     "phaser": "3.90.0"
   },

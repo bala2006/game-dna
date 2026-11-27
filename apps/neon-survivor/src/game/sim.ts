@@ -1,4 +1,7 @@
 import type { FlatState, ParameterValues } from '@gamedna/core';
+import { createStateMachine } from '@gamedna/kit/fsm';
+import { clamp } from '@gamedna/kit/random';
+import { seek, type Vec2 } from '@gamedna/kit/steering';
 import { FixedStepSimulation, flag, msToTicks, num, type InputFrame } from '@gamedna/starter';
 import tuning from './tuning.json';
 
@@ -32,6 +35,7 @@ const ENEMY_STATS: Record<EnemyKind, { r: number; hp: number; speed: number; poi
 };
 
 export type RunState = 'playing' | 'gameOver' | 'victory';
+type RunEvent = 'die' | 'win';
 
 /**
  * Neon Survivor rules as a deterministic fixed-step simulation.
@@ -51,10 +55,13 @@ export class NeonSurvivorSim extends FixedStepSimulation {
   score = 0;
   kills = 0;
   wave = 1;
-  state: RunState = 'playing';
   enemies: Enemy[] = [];
   /** Last attack, kept for rendering the pulse ring. */
   lastAttackTick = -1000;
+  /** Run flow: playing ends in gameOver (health 0) or victory (last wave cleared); a new run resets it. */
+  private readonly flow = createStateMachine<RunState, RunEvent>({ initial: 'playing', transitions: { playing: { die: 'gameOver', win: 'victory' } } });
+  /** Scratch steering force, reused every tick. */
+  private readonly steer: Vec2 = { x: 0, y: 0 };
   private nextEnemyId = 1;
   private spawnQueue: EnemyKind[] = [];
   private spawnTimer = 0;
@@ -70,6 +77,9 @@ export class NeonSurvivorSim extends FixedStepSimulation {
   }
   get totalWaves(): number {
     return Math.round(num(this.params, 'rules.waves', 5));
+  }
+  get state(): RunState {
+    return this.flow.state;
   }
   get arena(): string {
     return typeof this.setup['arena'] === 'string' ? (this.setup['arena'] as string) : 'waves';
@@ -94,7 +104,7 @@ export class NeonSurvivorSim extends FixedStepSimulation {
     this.score = 0;
     this.kills = 0;
     this.wave = 1;
-    this.state = 'playing';
+    this.flow.reset();
     this.enemies = [];
     this.nextEnemyId = 1;
     this.spawnQueue = [];
@@ -265,11 +275,10 @@ export class NeonSurvivorSim extends FixedStepSimulation {
       if (!e.alive) continue;
       if (e.flashTicks > 0) e.flashTicks--;
       if (e.kind === 'chaser' || e.kind === 'brute') {
-        const d = Math.max(1, Math.hypot(this.x - e.x, this.y - e.y));
-        const tx = ((this.x - e.x) / d) * e.speed;
-        const ty = ((this.y - e.y) / d) * e.speed;
-        e.vx += (tx - e.vx) * 0.06;
-        e.vy += (ty - e.vy) * 0.06;
+        // Seek the player; inside 1 px the desired speed shrinks with distance. Blend 6% of the change per tick.
+        const f = seek(e, this, e.speed, this.steer, 1);
+        e.vx += f.x * 0.06;
+        e.vy += f.y * 0.06;
       } else if (e.kind === 'dummy') {
         e.vx = 0;
         e.vy = 0;
@@ -290,7 +299,7 @@ export class NeonSurvivorSim extends FixedStepSimulation {
         this.invulnTicks = invulnTicks;
         this.emit('playerHit', { health: this.health, enemyId: e.id });
         if (this.health === 0) {
-          this.state = 'gameOver';
+          this.flow.send('die');
           this.emit('gameOver', { score: this.score, wave: this.wave });
           return;
         }
@@ -309,7 +318,7 @@ export class NeonSurvivorSim extends FixedStepSimulation {
     }
     if (this.enemies.some((e) => e.alive)) return;
     if (this.wave >= this.totalWaves) {
-      this.state = 'victory';
+      this.flow.send('win');
       this.emit('victory', { score: this.score });
       return;
     }
@@ -345,9 +354,6 @@ export class NeonSurvivorSim extends FixedStepSimulation {
 
 function approachAxis(v: number, target: number, delta: number): number {
   return v < target ? Math.min(v + delta, target) : Math.max(v - delta, target);
-}
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(hi, v));
 }
 function round2(v: number): number {
   return Math.round(v * 100) / 100;
