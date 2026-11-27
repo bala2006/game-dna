@@ -21,7 +21,16 @@ export function normalizeSeed(seed: number): number {
 }
 
 export function createRng(seed: number): Rng {
-  let s = normalizeSeed(seed) ^ 0x9e3779b9;
+  return rngFromState(normalizeSeed(seed) ^ 0x9e3779b9);
+}
+
+/** An Rng that continues exactly where the one that reported `rng.state()` left off. */
+export function restoreRng(state: number): Rng {
+  return rngFromState(Number.isInteger(state) && state >= -0x80000000 && state <= 0xffffffff ? state : normalizeSeed(state));
+}
+
+function rngFromState(initial: number): Rng {
+  let s = initial;
   const next = (): number => {
     s = (s + 0x6d2b79f5) >>> 0;
     let t = s;
@@ -50,6 +59,32 @@ export function createRng(seed: number): Rng {
       return s;
     },
   };
+}
+
+/** A shuffled copy of `items` (Fisher-Yates); the input is not changed. */
+export function shuffle<T>(rng: Rng, items: readonly T[]): T[] {
+  const out = items.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng.next() * (i + 1)), t = out[i] as T;
+    out[i] = out[j] as T;
+    out[j] = t;
+  }
+  return out;
+}
+
+/** Index of an item picked with probability proportional to `weight(item)`; -1 when no weight is positive. Draws once. */
+export function weightedPick<T>(rng: Rng, items: readonly T[], weight: (item: T, index: number) => number): number {
+  let total = 0;
+  for (let i = 0; i < items.length; i++) total += Math.max(0, weight(items[i] as T, i) || 0);
+  if (!(total > 0)) return -1;
+  let r = rng.next() * total, last = -1;
+  for (let i = 0; i < items.length; i++) {
+    const w = Math.max(0, weight(items[i] as T, i) || 0);
+    if (w <= 0) continue;
+    last = i;
+    if ((r -= w) < 0) return i;
+  }
+  return last;
 }
 
 /** Derive an independent child seed from a parent seed and a label (FNV-1a over the label). */

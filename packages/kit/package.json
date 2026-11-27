@@ -18,7 +18,15 @@
     "./contracts": "./src/contracts.ts",
     "./collision": "./src/collision.ts",
     "./controller": "./src/controller.ts",
-    "./handling": "./src/handling.ts"
+    "./handling": "./src/handling.ts",
+    "./fsm": "./src/fsm.ts",
+    "./behavior": "./src/behavior.ts",
+    "./steering": "./src/steering.ts",
+    "./nav": "./src/nav.ts",
+    "./events": "./src/events.ts",
+    "./save": "./src/save.ts",
+    "./inventory": "./src/inventory.ts",
+    "./rooms": "./src/rooms.ts"
   },
   "peerDependencies": {
     "three": "0.170.0"
