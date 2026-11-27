@@ -20,7 +20,7 @@ env:
 
 jobs:
   checks:
-    name: Typecheck, docs and unit tests (Node ${{ matrix.node }})
+    name: Typecheck, docs, knowledge and unit tests (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -41,6 +41,10 @@ jobs:
         run: npm run typecheck
       - name: Docs formatting rules (docs/rules.md)
         run: npm run check:docs
+      - name: Knowledge validation (skills, agents, compiled samples)
+        run: npm run check:knowledge
+      - name: Evaluation dataset check
+        run: npm run check:eval
       - name: Unit, property and scenario tests
         run: npx vitest --run --reporter=default --reporter=github-actions
 
