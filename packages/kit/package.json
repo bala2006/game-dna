@@ -26,7 +26,11 @@
     "./events": "./src/events.ts",
     "./save": "./src/save.ts",
     "./inventory": "./src/inventory.ts",
-    "./rooms": "./src/rooms.ts"
+    "./rooms": "./src/rooms.ts",
+    "./pool": "./src/pool.ts",
+    "./budget": "./src/budget.ts",
+    "./feedback": "./src/feedback.ts",
+    "./dispose": "./src/dispose.ts"
   },
   "peerDependencies": {
     "three": "0.170.0"
