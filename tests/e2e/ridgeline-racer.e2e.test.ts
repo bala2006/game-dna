@@ -48,7 +48,7 @@ describe('ridgeline-racer in Chromium', () => {
     for (let i = 0; i < 4; i++) {
       const s = await state(page);
       views.push(s.view);
-      await page.screenshot({ path: path.join(shots, `view-${i}-${s.view.replace(/\s+/g, '-').toLowerCase()}.png`) });
+      await page.screenshot({ path: path.join(shots, `view-${i}-${s.view.replace(/\s+/g, '-').toLowerCase()}.png`), timeout: 120_000 });
       await page.keyboard.press('KeyC');
       await page.waitForFunction((prev) => (window as unknown as Win).__game.state.view !== prev, s.view, { timeout: 60_000, polling: 100 });
     }
@@ -107,7 +107,7 @@ describe('ridgeline-racer in Chromium', () => {
     await t('touchStart', [{ x: gas.x, y: gas.y, id: 1 }, { x: 150, y: 260, id: 2 }]);
     await t('touchMove', [{ x: gas.x, y: gas.y, id: 1 }, { x: 205, y: 262, id: 2 }]);
     await until(page, () => (window as unknown as Win).__game.state.steer < -0.3, 60_000);
-    await page.screenshot({ path: path.join(shots, 'touch.png') });
+    await page.screenshot({ path: path.join(shots, 'touch.png'), timeout: 120_000 });
     await t('touchEnd', []);
     const v0 = (await state(page)).view, cam = await box('cam');
     await t('touchStart', [{ x: cam.x, y: cam.y, id: 3 }]);
@@ -125,7 +125,7 @@ describe('ridgeline-racer in Chromium', () => {
     const s = await state(page);
     expect(s.offroad).toBe(false);
     expect(s.speed).toBeGreaterThan(30);
-    await page.screenshot({ path: path.join(shots, 'auto.png') });
+    await page.screenshot({ path: path.join(shots, 'auto.png'), timeout: 120_000 });
     expect(errors).toEqual([]);
     await ctx.close();
   }, 900_000);

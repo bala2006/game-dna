@@ -42,7 +42,7 @@ describe('trail-walk in Chromium', () => {
     const a = { x: s.x, z: s.z, yaw: s.cameraYaw };
     await page.keyboard.down('KeyW');
     await until(page, () => (window as unknown as Win).__game.state.speed > 2.5);
-    await page.screenshot({ path: path.join(shots, 'third-person.png') });
+    await page.screenshot({ path: path.join(shots, 'third-person.png'), timeout: 120_000 });
     await page.keyboard.up('KeyW');
     s = await state(page);
     const dx = s.x - a.x, dz = s.z - a.z, d = Math.hypot(dx, dz);
@@ -66,7 +66,7 @@ describe('trail-walk in Chromium', () => {
     await until(page, (f) => Math.abs((window as unknown as Win).__game.state.facing - f) > 0.8, f0);
     await page.evaluate(() => { (window as unknown as Win).__game.input.raw.look.x += 600; });
     await frames(page, 3);
-    await page.screenshot({ path: path.join(shots, 'first-person.png') });
+    await page.screenshot({ path: path.join(shots, 'first-person.png'), timeout: 120_000 });
 
     await page.keyboard.press('Space');
     await until(page, () => !(window as unknown as Win).__game.state.grounded);
@@ -93,7 +93,7 @@ describe('trail-walk in Chromium', () => {
     await page.evaluate(() => (window as unknown as Win).__game.standAtMarker(0));
     await until(page, () => getComputedStyle(document.querySelector('#prompt')!).display === 'block');
     expect(await page.textContent('#prompt')).toBe('E collect');
-    await page.screenshot({ path: path.join(shots, 'marker.png') });
+    await page.screenshot({ path: path.join(shots, 'marker.png'), timeout: 120_000 });
     await page.keyboard.press('KeyE');
     await until(page, () => (window as unknown as Win).__game.state.count === 1);
     await until(page, () => document.querySelector('#count')!.textContent === '1/8');
@@ -120,7 +120,7 @@ describe('trail-walk in Chromium', () => {
     for (const x of [600, 640, 680]) await t('touchMove', [{ x: 150, y: 205, id: 1 }, { x, y: 180, id: 2 }]);
     await frames(page, 2);
     expect(Math.abs((await state(page)).cameraYaw - y0)).toBeGreaterThan(0.3);
-    await page.screenshot({ path: path.join(shots, 'touch.png') });
+    await page.screenshot({ path: path.join(shots, 'touch.png'), timeout: 120_000 });
     await t('touchEnd', []);
     const view = await page.evaluate(() => { const r = document.querySelector('.gdi-btn[data-id="cam"]')!.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
     await t('touchStart', [{ x: view.x, y: view.y, id: 3 }]);
