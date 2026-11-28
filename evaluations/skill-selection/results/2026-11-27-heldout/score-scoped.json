@@ -1,0 +1,255 @@
+{
+  "cases": 198,
+  "missingPredictions": 0,
+  "precision": 0.985,
+  "recall": 0.964,
+  "f1": 0.975,
+  "exactSetAccuracy": 0.965,
+  "nearMissRejection": 1,
+  "forbiddenAvoidance": 1,
+  "combinedExact": 0.833,
+  "midTaskExact": 1,
+  "pivotExact": 0.944,
+  "crossSpecialistExact": 0.944,
+  "engineMismatchRate": 0,
+  "unnecessaryLoads": 2,
+  "missedLoads": 5,
+  "repeatedReads": 0,
+  "specialistAccuracy": 0.975,
+  "moduleRecall": 0.845,
+  "moduleCaseDiscovery": 0.822,
+  "perCategory": {
+    "combined": {
+      "cases": 18,
+      "exact": 0.833,
+      "tp": 36,
+      "fp": 0,
+      "fn": 3,
+      "specialistRight": 1
+    },
+    "cross-specialist": {
+      "cases": 18,
+      "exact": 0.944,
+      "tp": 2,
+      "fp": 1,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "engine": {
+      "cases": 18,
+      "exact": 0.944,
+      "tp": 16,
+      "fp": 1,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "explicit": {
+      "cases": 18,
+      "exact": 0.944,
+      "tp": 12,
+      "fp": 0,
+      "fn": 1,
+      "specialistRight": 1
+    },
+    "implicit": {
+      "cases": 18,
+      "exact": 1,
+      "tp": 12,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "mid-task": {
+      "cases": 18,
+      "exact": 1,
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 0.833
+    },
+    "near-miss": {
+      "cases": 18,
+      "exact": 1,
+      "tp": 11,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 0.944
+    },
+    "no-skill": {
+      "cases": 18,
+      "exact": 1,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "pivot": {
+      "cases": 18,
+      "exact": 0.944,
+      "tp": 13,
+      "fp": 0,
+      "fn": 1,
+      "specialistRight": 0.944
+    },
+    "project-context": {
+      "cases": 18,
+      "exact": 1,
+      "tp": 14,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 1
+    },
+    "reuse": {
+      "cases": 18,
+      "exact": 1,
+      "tp": 12,
+      "fp": 0,
+      "fn": 0,
+      "specialistRight": 1
+    }
+  },
+  "failures": [
+    {
+      "id": "heldout-explicit-003",
+      "category": "explicit",
+      "role": "director",
+      "expected": [
+        "game-feel"
+      ],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "heldout-near-miss-003",
+      "category": "near-miss",
+      "role": "director",
+      "expected": [],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": "gamedna-motion",
+      "gotSpecialist": "gamedna-interaction"
+    },
+    {
+      "id": "heldout-combined-001",
+      "category": "combined",
+      "role": "director",
+      "expected": [
+        "audio-design",
+        "game-feel",
+        "hud-and-menus"
+      ],
+      "got": [
+        "audio-design",
+        "game-feel"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "heldout-combined-005",
+      "category": "combined",
+      "role": "director",
+      "expected": [
+        "hud-and-menus",
+        "input-and-controls",
+        "game-architecture"
+      ],
+      "got": [
+        "hud-and-menus",
+        "input-and-controls"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "heldout-combined-008",
+      "category": "combined",
+      "role": "gamedna-gameplay",
+      "expected": [
+        "enemy-ai",
+        "game-mechanics",
+        "game-architecture"
+      ],
+      "got": [
+        "enemy-ai",
+        "game-architecture"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "heldout-engine-011",
+      "category": "engine",
+      "role": "gamedna-gameplay",
+      "expected": [
+        "phaser-starter"
+      ],
+      "got": [
+        "game-architecture",
+        "phaser-starter"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": null
+    },
+    {
+      "id": "heldout-mid-task-002",
+      "category": "mid-task",
+      "role": "director",
+      "expected": [],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": "gamedna-gameplay",
+      "gotSpecialist": null
+    },
+    {
+      "id": "heldout-mid-task-005",
+      "category": "mid-task",
+      "role": "director",
+      "expected": [],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": "gamedna-quality"
+    },
+    {
+      "id": "heldout-mid-task-006",
+      "category": "mid-task",
+      "role": "director",
+      "expected": [],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": "gamedna-visual",
+      "gotSpecialist": null
+    },
+    {
+      "id": "heldout-pivot-006",
+      "category": "pivot",
+      "role": "director",
+      "expected": [
+        "hud-and-menus"
+      ],
+      "got": [],
+      "forbiddenHit": [],
+      "expectedSpecialist": null,
+      "gotSpecialist": "gamedna-experience"
+    },
+    {
+      "id": "heldout-cross-specialist-014",
+      "category": "cross-specialist",
+      "role": "gamedna-experience",
+      "expected": [],
+      "got": [
+        "pacing-and-onboarding"
+      ],
+      "forbiddenHit": [],
+      "expectedSpecialist": "gamedna-gameplay",
+      "gotSpecialist": "gamedna-gameplay"
+    }
+  ]
+}

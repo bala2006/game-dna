@@ -1,120 +1,53 @@
 ---
 name: vehicle-design
-description: Cars, karts, bikes and trucks at real dimensions, with body proportions, wheels, cockpit, materials, camera mounts and animation from driving state. Use when adding a vehicle, or when one looks like a box or the wrong size.
+description: Builds what the player sees of a vehicle. Real dimensions and proportions, part hierarchy, materials, cockpit, wheel spin and steer, body roll and pitch, lights and damage presentation. Use when a vehicle looks like a box, the wrong size or rigid. Not for grip and handling (vehicle-dynamics) or camera views (camera-systems).
+license: MIT
+metadata:
+  owner: motion
+  topics: vehicle construction, vehicle proportions, wheel and body animation, vehicle damage presentation
+  engines: portable, three@0.170, phaser@3.90
+  kit: kit/vehicle
 ---
 
 # Vehicle design
 
-A vehicle reads as real when its proportions match real vehicles, its wheels fill their arches and sit flush with the body, and its body moves on its wheels. Handling lives in the motion-and-physics skill. This skill builds what the player sees.
+## Scope
 
-## The data shape
+Owns a vehicle's visible body: spec, proportions, hierarchy, materials, cockpit, wheel, body and light animation from driving state, and how damage shows. When the question is grip, drift, speed or wall bounces, use `vehicle-dynamics`. When choosing chase, hood or cockpit views, use `camera-systems`. When skid marks and smoke need drawing, use `rendering-and-lighting`. When a driver sits inside, use `character-animation` for the pose.
 
-1. **Spec**: real dimensions in meters: length, width, height, wheelbase, front overhang, wheel diameter, tire width, ground clearance, and the side-profile heights (nose, cowl, deck, tail) and cabin span as shares of length.
-2. **Layout**: a pure function of the spec. It gives the axle positions, the body top and width at any point along the length, the roof line, the belt line, the wheel positions and the mounts. It is testable without a renderer.
-3. **View**: meshes built from the layout, in a fixed hierarchy (Step 3).
-4. **Animation**: wheel spin, steer, body roll and pitch, and lights, from simulation state. The view never writes the simulation.
+## Decisions
 
-`@gamedna/kit/vehicle` implements this for three.js: `CAR_PRESETS`, `carLayout(spec)`, `buildCar({ preset, paint, caliper, ...spec })` (returns the groups in Step 3 plus `hull`, `cabin`, `wheels`, `materials`, `layout` and `mounts`), `animateCar(view, state, dt)`, `setCockpitView(view, inside)` and `measureCar(view)`.
+- **Spec, layout, view, animation.** The spec is real dimensions in meters; the layout is a pure function of it (axles, body profile, roof, belt line, wheels, eye), testable without a renderer. The view never writes the simulation.
+- **Real numbers** (`CAR_PRESETS`, length x width x height, wheelbase, wheel diameter): hatch 4.06 x 1.78 x 1.47, 2.56, 0.63; sedan 4.78 x 1.84 x 1.45, 2.85, 0.67; coupe 4.5 x 1.9 x 1.28, 2.6, 0.68; SUV 4.72 x 1.93 x 1.72, 2.84, 0.76. Karts, bikes, pickups and buses are in `references/dimensions.md`.
+- **Proportions that stop the box look.** Wheelbase 0.56-0.62 of length. Arch radius = wheel radius x 1.12 + 3 cm. Track = width - tire width - 4 cm, so wheels sit flush. Glass band 0.28-0.35 of height (0.25 on sports cars). Roof 0.78-0.86 of body width. Ends narrow 8-14% over their last 15-20%. Stylized vehicles may grow wheels up to 15% and height up to 10%; keep the rest real.
+- **Hierarchy.** Root (ground, yaw) > body (pivot at 0.42 of height; rolls and pitches) > shell (paint, glass, lights) > interior. Wheels hang from the root: pivot > steer > spin, so roll never tilts them. Camera mounts live in shell space.
+- **Animation from state.** Spin = distance / wheel radius. Front wheels up to 0.4-0.6 rad at low speed. Steering wheel at 6x the wheel angle; the real 12-16x is invisible on screen. Roll 0.006 rad per m/s² up to 0.06; pitch 0.004 rad per m/s² up to 0.035; both smoothed over 0.12 s. Brake lights at 5x their running brightness.
+- **Roll away from the turn.** With `animateCar`, positive `lateralAccel` (toward the car's left, +x) lifts the left side. A flipped sign leans the car into corners like a motorbike. Braking dips the nose; acceleration squats the tail.
+- **Spokes alias.** A 5-spoke wheel appears to slow, stop or turn backward once it turns more than half a spoke gap (36°) per frame: about 13 m/s for a 0.68 m wheel at 60 fps. Above that, swap spokes for a blurred disc.
+- **Damage shows state, never sets it.** The simulation holds damage per zone and emits impacts with point and power; the view picks one of 3-4 tiers (scuffed, dented, parts loose, wrecked). Dents push hull vertices within 0.3-0.6 m of the impact inward by 5-15 cm at most, clear of arches and cabin. Bumpers and mirrors detach at a threshold; heavy damage adds engine smoke. Collision shapes never follow the mesh.
 
-## Step 1: Pick a class and its numbers
+## Mistakes
 
-Start from real ranges. `CAR_PRESETS` holds the four car rows.
+- Short wheelbase, inset wheels and flat sides: a toy or a box.
+- Wheels parented to the body: they tilt with every corner.
+- Wheel spin from time or a guessed factor: tires slide visibly.
+- A car twice real size beside a 1.75 m person, or dimensions measured with mirrors included.
+- Paint visible from inside the cockpit; the dash clipped by the near plane.
+- Dents that push vertices outward into the wheel arches.
 
-| Class | Length | Width | Height | Wheelbase | Wheel diameter | Clearance |
-|---|---|---|---|---|---|---|
-| Hatchback | 3.9-4.3 m | 1.7-1.8 m | 1.42-1.5 m | 2.5-2.65 m | 0.6-0.65 m | 0.13-0.16 m |
-| Sedan | 4.6-4.9 m | 1.8-1.87 m | 1.42-1.48 m | 2.8-2.95 m | 0.65-0.7 m | 0.13-0.15 m |
-| Sports coupe | 4.3-4.6 m | 1.85-1.95 m | 1.22-1.32 m | 2.45-2.65 m | 0.66-0.7 m | 0.1-0.12 m |
-| SUV | 4.6-4.9 m | 1.9-1.95 m | 1.68-1.78 m | 2.8-2.9 m | 0.74-0.8 m | 0.19-0.22 m |
-| Pickup | 5.3-5.9 m | 2.0-2.1 m | 1.85-1.95 m | 3.3-3.7 m | 0.8-0.85 m | 0.22-0.25 m |
-| Kart | 1.8 m | 1.4 m | 0.6 m without driver | 1.01-1.07 m | 0.28 m | 0.03-0.05 m |
-| Motorbike | 2.0-2.2 m | 0.75-0.85 m | 1.1-1.2 m | 1.35-1.6 m | 0.6-0.65 m | 0.13-0.15 m; seat 0.78-0.85 m |
-| City bus | 12 m | 2.55 m | 3.0-3.2 m | 5.9-6.1 m | 1.0 m | 0.25-0.3 m |
+## Reuse
 
-Use one scale for the whole game: 1 unit = 1 m (world-building skill). A stylized game may exaggerate wheels by up to 15% and height by up to 10%; keep the rest real.
+`@gamedna/kit/vehicle`: `CAR_PRESETS`, `carLayout(spec)`, `buildCar({ preset, paint, caliper, ...spec })` (returns `root`, `body`, `shell`, `interior`, `hull`, `cabin`, `steeringWheel`, `wheels`, `materials`, `layout`, `mounts`), `animateCar(view, { steerAngle, speed, lateralAccel, longitudinalAccel, braking }, dt)`, `setCockpitView(view, inside)`, `measureCar(view)`, `carMaterials`. Ridgeline Racer picks paint with a seeded `hsv` and seats a Kit humanoid in `interior`. The game keeps the damage model and other vehicle types.
 
-## Step 2: Proportions that stop the box look
+## Engines
 
-| Rule | Starting value | Why it matters |
-|---|---|---|
-| Wheelbase share of length | 0.56-0.62 for cars | Short wheelbases look like toys |
-| Wheels fill the arches | Arch radius = wheel radius x 1.1 + 2-3 cm | Big gaps read as a model kit |
-| Wheels flush with the sides | Track = width - tire width - 4 cm | Inset wheels look like a cart |
-| Glass height share of total height | 0.28-0.35; 0.25 on sports cars | A tall glass band looks like a van |
-| Roof narrower than the body | Roof width 0.78-0.86 x body width | Straight sides look like a box |
-| Ends taper in plan view | The last 15-20% of the length at each end narrows by 8-14% | Square ends look like a brick |
-| Rounded sections | Superellipse body cross-section, exponent about 0.4 | Flat sides catch no reflections |
-| Lights and grille | Head and tail lights near the corners, a dark lower intake | The face tells the type at a glance |
-
-Check the profile against a person: a coupe roof sits near a 1.75 m person's chest, an SUV roof near the top of the head (character-design skill).
-
-## Step 3: Structure
-
-```text
-root (ground point at the center of the wheelbase, yaw)
-  body (pivot at 0.4-0.45 x height; rolls and pitches)
-    shell (paint, glass, lights, trim)
-      interior (dash, seats, steering wheel, headliner)
-  wheel pivot x4 -> steer -> spin
-```
-
-- Wheels hang from the root, not from the body, so body roll does not tilt the wheels.
-- Front wheels steer around their vertical axis; every wheel spins around its axle.
-- Expose mounts for the camera skill: `eye` at the driver's eye, `hood` just above the hood. Mounts are in shell space so they roll with the body.
-- Put the driver on the correct side for the market: `driverSide: 'left'` or `'right'`.
-
-## Step 4: Materials
-
-| Part | three.js starting values |
-|---|---|
-| Paint | `MeshPhysicalMaterial`: metalness 0.4-0.5, roughness 0.3, clearcoat 1, clearcoat roughness 0.05 |
-| Glass | Dark tint, opacity 0.6 outside and 0.1 from the cockpit, `depthWrite: false` |
-| Trim, tires | Near black, roughness 0.6 for trim and 0.9 for rubber |
-| Rims, chrome, mirrors | Metalness 0.9-1, roughness 0.06-0.3 |
-| Lights | Emissive; tail lights about 5x brighter while braking |
-
-Take paint colors from the game's palette (art-direction skill). A realistic look needs a sky environment map, or paint and chrome look like plastic (three-js skill).
-
-## Step 5: Animation from state
-
-| Visual | Source | Starting value |
-|---|---|---|
-| Wheel spin | Distance travelled / wheel radius | Exact, so tires never slide visually |
-| Front wheel angle | Steering state | Up to 0.4-0.6 rad at low speed |
-| Steering wheel | Wheel angle x ratio | Ratio 6-8 reads well on screen; real cars use 12-16 |
-| Body roll | Lateral acceleration | 0.006 rad per m/s², capped at 0.06 rad |
-| Body pitch | Longitudinal acceleration | 0.004 rad per m/s², capped at 0.035 rad |
-| Smoothing | Time constant on roll and pitch | 0.1-0.15 s |
-
-Skid marks, smoke and tire sound come from the simulation's `slip` event (motion-and-physics skill).
-
-## Step 6: Cockpit view
-
-- Model what the driver sees: dash top, steering wheel, A-pillars, headliner, seats and mirrors with a reflective face.
-- Inside faces need their own materials: the cabin's inner side shows the headliner, not paint.
-- Call `setCockpitView(view, true)` on entering the view and `false` on leaving it, so glass fades from inside.
-- The camera's near plane drops to 0.05 m in this view only (camera skill).
-
-## 2D vehicles
-
-- Top-down sprites keep the real length-to-width ratio, about 2.3-2.5 for cars. Rotate around the center of the wheelbase.
-- Side view: wheels are separate sprites that spin by distance, and the body sprite bobs on them.
-
-## Other vehicles
-
-Write the spec table first (length, width, height, wheelbase, wheel size, clearance, seat and eye height), then a layout function like `carLayout`. Boats need draft and freeboard; aircraft need wingspan and wing position along the length.
+- three.js 0.170: read `references/three.md` when extending `buildCar`, deforming the hull, seating a driver or adding lamps.
+- Phaser 3.90: read `references/phaser.md` when drawing vehicles as sprites.
 
 ## Verify
 
-- Unit test the layout: the axles match the wheelbase and overhang, and the wheels touch the ground.
-- `measureCar(view)` measures the hull and cabin in the car's own frame, wherever the car stands. Mirrors stay out, as in published specs. Length, width and height are within 2% of the spec; `packages/kit/tests/kit.test.ts` checks every preset.
-- Screenshot the vehicle from the side, the front, the rear three-quarter, and in the cockpit view at speed. Put a 1.75 m person next to it in one shot.
-- In each shot, check that the wheels fill the arches and that nothing clips the camera.
-
-## Sources
-
-- SAE J1100, *Motor Vehicle Dimensions*: names and measurement of length, wheelbase, overhang and clearance.
-- Gillespie, *Fundamentals of Vehicle Dynamics* (1992): roll and pitch from lateral and longitudinal acceleration.
-- CIK-FIA *Technical Regulations* for karts: wheelbase range.
-- EU Directive 96/53/EC: maximum width 2.55 m and height 4 m for buses and trucks.
-- Macey and Wardle, *H-Point: The Fundamentals of Car Design and Packaging* (2nd edition, 2014): proportions, glass share, packaging.
+- `measureCar` within 2% of the spec for every preset, wherever the car stands (`packages/kit/tests/kit.test.ts`).
+- Layout: axle spacing equals the wheelbase, wheels rest at y = radius, the eye sits under the roof.
+- After driving distance d, wheel rotation equals d / radius.
+- Roll test: a left turn lifts the left side; braking pitches the nose down.
+- Screenshots from the side, front, rear three-quarter and cockpit at speed, one with a 1.75 m person beside the car.

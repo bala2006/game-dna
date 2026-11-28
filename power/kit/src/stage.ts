@@ -5,6 +5,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import type { Point3 } from './camera.js';
+import { createResourceTracker } from './dispose.js';
 
 /** sRGB color from hue in degrees, saturation and value in 0-1. */
 export function hsv(h: number, s: number, v: number): THREE.Color {
@@ -135,6 +136,7 @@ export interface Stage {
   readonly anisotropy: number;
   /** Moves the sky and the sun's shadow box to `focus`, aims the sun at `ahead`, then draws. Call once per frame. */
   render(dt: number, focus: Point3, ahead?: Point3): void;
+  /** Frees everything the stage created (sky, environment map, shadow map, post-processing, renderer) and removes the canvas. Not what you added to `scene`. */
   dispose(): void;
 }
 
@@ -156,7 +158,7 @@ export function createStage({
   quality = 'high',
   container = document.body,
 }: StageOptions): Stage {
-  const low = quality === 'low';
+  const low = quality === 'low', resources = createResourceTracker(), track = resources.track;
   const renderer = new THREE.WebGLRenderer({ antialias: low, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio ?? 1, low ? 1 : 1.5));
   renderer.setSize(innerWidth, innerHeight);
@@ -178,18 +180,18 @@ export function createStage({
     fragmentShader: SKY_FRAGMENT,
   });
   const skyRadius = far * 0.85;
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(skyRadius, 48, 24), skyMaterial);
+  const sky = track(new THREE.Mesh(new THREE.SphereGeometry(skyRadius, 48, 24), skyMaterial));
   sky.renderOrder = -1;
   sky.frustumCulled = false;
   scene.add(sky);
   if (fog > 0) scene.fog = new THREE.FogExp2(horizonColor, fog);
-  const pmrem = new THREE.PMREMGenerator(renderer), envScene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer), envScene = track(new THREE.Scene());
   envScene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 32, 16), skyMaterial));
-  scene.environment = pmrem.fromScene(envScene, 0.02, 0.1, 200).texture;
+  scene.environment = track(pmrem.fromScene(envScene, 0.02, 0.1, 200)).texture;
   scene.environmentIntensity = environmentIntensity;
   pmrem.dispose();
 
-  const sun = new THREE.DirectionalLight(new THREE.Color(sunColor).lerp(new THREE.Color(1, 1, 1), 0.5), sunIntensity);
+  const sun = track(new THREE.DirectionalLight(new THREE.Color(sunColor).lerp(new THREE.Color(1, 1, 1), 0.5), sunIntensity));
   sun.castShadow = true;
   sun.shadow.mapSize.setScalar(low ? 1024 : 2048);
   Object.assign(sun.shadow.camera, { left: -shadowExtent, right: shadowExtent, top: shadowExtent, bottom: -shadowExtent, near: 1, far: 320 });
@@ -200,16 +202,16 @@ export function createStage({
   const camera = new THREE.PerspectiveCamera(fov, innerWidth / innerHeight, 0.25, far);
   let composer: EffectComposer | null = null;
   if (!low) {
-    composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth, innerHeight, { samples: 4, type: THREE.HalfFloatType }));
+    composer = track(new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth, innerHeight, { samples: 4, type: THREE.HalfFloatType })));
     composer.setPixelRatio(renderer.getPixelRatio());
-    composer.addPass(new RenderPass(scene, camera));
-    if (bloom) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), bloom.strength, bloom.radius, bloom.threshold));
-    if (vignette > 0) composer.addPass(new ShaderPass({
+    composer.addPass(track(new RenderPass(scene, camera)));
+    if (bloom) composer.addPass(track(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), bloom.strength, bloom.radius, bloom.threshold)));
+    if (vignette > 0) composer.addPass(track(new ShaderPass({
       uniforms: { tDiffuse: { value: null }, strength: { value: vignette } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
       fragmentShader: 'uniform sampler2D tDiffuse; uniform float strength; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - 0.5; c.rgb *= 1.0 - strength * dot(d, d) * 2.0; gl_FragColor = c; }',
-    }));
-    composer.addPass(new OutputPass());
+    })));
+    composer.addPass(track(new OutputPass()));
   }
 
   const resize = () => {
@@ -237,7 +239,7 @@ export function createStage({
     },
     dispose() {
       removeEventListener('resize', resize);
-      composer?.dispose();
+      resources.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     },

@@ -1,20 +1,9 @@
-/** Typed error codes from PRD section 8, plus a few generic ones for input handling. */
+/** Typed error codes for GameDNA utilities. Each failure names its code so callers never mistake it for a pass. */
 export const ERROR_CODES = [
-  'UNSUPPORTED_ENGINE',
-  'ADAPTER_MISSING',
   'INVALID_PARAMETER',
-  'SESSION_NOT_READY',
-  'STALE_BASELINE',
-  'TIMEOUT',
   'PERMISSION_DENIED',
-  'UNSTABLE_REPLAY',
-  'ASSET_LICENSE_UNKNOWN',
   'INVALID_INPUT',
-  'INVALID_TRANSITION',
   'NOT_FOUND',
-  'LIMIT_EXCEEDED',
-  /** An engine adapter answered a bridge request with an error; its own code is in `details.adapterCode`. */
-  'ADAPTER_ERROR',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

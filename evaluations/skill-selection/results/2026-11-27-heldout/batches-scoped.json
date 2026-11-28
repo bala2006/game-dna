@@ -1,0 +1,57 @@
+[
+  {
+    "batch": "director-01",
+    "cases": 34,
+    "headerTokens": 2140
+  },
+  {
+    "batch": "director-02",
+    "cases": 26,
+    "headerTokens": 2140
+  },
+  {
+    "batch": "gamedna-experience-01",
+    "cases": 16,
+    "headerTokens": 2129
+  },
+  {
+    "batch": "gamedna-gameplay-01",
+    "cases": 20,
+    "headerTokens": 2059
+  },
+  {
+    "batch": "gamedna-interaction-01",
+    "cases": 14,
+    "headerTokens": 1976
+  },
+  {
+    "batch": "gamedna-motion-01",
+    "cases": 13,
+    "headerTokens": 1979
+  },
+  {
+    "batch": "gamedna-performance-01",
+    "cases": 13,
+    "headerTokens": 1901
+  },
+  {
+    "batch": "gamedna-quality-01",
+    "cases": 12,
+    "headerTokens": 1909
+  },
+  {
+    "batch": "gamedna-simulation-01",
+    "cases": 21,
+    "headerTokens": 2121
+  },
+  {
+    "batch": "gamedna-visual-01",
+    "cases": 13,
+    "headerTokens": 2060
+  },
+  {
+    "batch": "gamedna-world-01",
+    "cases": 16,
+    "headerTokens": 1979
+  }
+]

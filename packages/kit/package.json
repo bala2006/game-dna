@@ -1,8 +1,8 @@
 {
   "name": "@gamedna/kit",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "GameDNA Kit: the reusable foundation for browser games. Seeded randomness, fixed-step loop, input for every device, camera views, vehicles, characters, terrain and a three.js stage. Written for GameDNA; not an engine.",
+  "description": "GameDNA Kit: tested, reusable game code for browser games. Portable modules (random, loop, input, collision, controllers, vehicle handling, AI, navigation, events, saves, inventory, rooms, pooling, budgets, feedback, contracts) and three.js presentation (camera, character, vehicle, world, stage, disposal). Written for GameDNA; not an engine.",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
@@ -14,13 +14,31 @@
     "./vehicle": "./src/vehicle.ts",
     "./character": "./src/character.ts",
     "./world": "./src/world.ts",
-    "./stage": "./src/stage.ts"
+    "./stage": "./src/stage.ts",
+    "./contracts": "./src/contracts.ts",
+    "./collision": "./src/collision.ts",
+    "./controller": "./src/controller.ts",
+    "./handling": "./src/handling.ts",
+    "./fsm": "./src/fsm.ts",
+    "./behavior": "./src/behavior.ts",
+    "./steering": "./src/steering.ts",
+    "./nav": "./src/nav.ts",
+    "./events": "./src/events.ts",
+    "./save": "./src/save.ts",
+    "./inventory": "./src/inventory.ts",
+    "./rooms": "./src/rooms.ts",
+    "./pool": "./src/pool.ts",
+    "./budget": "./src/budget.ts",
+    "./feedback": "./src/feedback.ts",
+    "./dispose": "./src/dispose.ts"
   },
   "peerDependencies": {
     "three": "0.170.0"
   },
   "peerDependenciesMeta": {
-    "three": { "optional": true }
+    "three": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "three": "0.170.0"

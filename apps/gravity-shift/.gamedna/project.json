@@ -19,14 +19,6 @@
   },
   "requirementsFile": ".kiro/specs/game/requirements.md",
   "tuningFile": "src/game/tuning.json",
-  "harness": {
-    "module": "src/game/sim.ts",
-    "export": "GravityShiftSim"
-  },
-  "viewport": {
-    "width": 960,
-    "height": 540
-  },
   "constraints": [
     {
       "id": "MOVE-01",
@@ -168,24 +160,6 @@
       "fault": true,
       "group": "fault",
       "description": "SEEDED FAULT for demos: grants coyote time after a jump, allowing a second midair jump"
-    }
-  },
-  "commands": {
-    "dev": {
-      "script": "dev",
-      "kind": "dev",
-      "url": "http://127.0.0.1:5173/",
-      "readyTimeoutMs": 30000
-    },
-    "test": {
-      "script": "test",
-      "kind": "test",
-      "timeoutMs": 120000
-    },
-    "build": {
-      "script": "build",
-      "kind": "build",
-      "timeoutMs": 180000
     }
   },
   "metrics": [

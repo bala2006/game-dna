@@ -12,7 +12,6 @@ import {
   type TraceEvent,
   type TraceSample,
 } from './schemas.js';
-import { advanceHarness, type AdvanceRequest, type AdvanceResult, type BridgeDriver, type BridgeParams, type StateResult } from './bridge.js';
 
 /** What a game must provide so GameDNA can drive its simulation tick by tick. */
 export interface GameHarness {
@@ -99,81 +98,89 @@ function matchesWhere(event: TraceEvent, where: Record<string, Primitive> | unde
 }
 
 /**
- * Turns a scenario into `advance` requests and their results into a `ScenarioRun`.
- * It owns everything a run means (sampling bounds, event cap, assertions), so a local
- * harness and a remote adapter produce the same run for the same game.
+ * Executes a scenario against a harness. Supports stepping to checkpoints so a caller
+ * (the browser adapter) can take screenshots between segments.
  */
-export class ScenarioRecorder {
-  readonly sampleEvery: number;
+export class ScenarioExecution {
   private readonly scenario: Scenario;
+  private readonly harness: GameHarness;
   private readonly params: ParameterValues;
   private readonly revision: string;
-  private readonly tickRateHz: number;
-  private readonly inputs: InputTransition[];
+  private readonly inputsByTick = new Map<number, InputTransition[]>();
   private readonly samples: TraceSample[] = [];
   private readonly events: TraceEvent[] = [];
+  private readonly appliedInputs: InputTransition[] = [];
   private readonly limitations: string[] = [];
-  private reached = 0;
+  private sampleEvery: number;
+  private seq = 0;
   private eventsTruncated = false;
   private finished: ScenarioRun | null = null;
 
-  constructor(scenario: Scenario, params: ParameterValues, options: { revision?: string | undefined; tickRateHz: number }) {
+  constructor(harness: GameHarness, scenario: Scenario, params: ParameterValues = {}, options: { revision?: string } = {}) {
+    this.harness = harness;
     this.scenario = scenario;
     this.params = { ...scenario.params, ...params };
     this.revision = options.revision ?? 'unknown';
-    this.tickRateHz = options.tickRateHz;
-    this.inputs = scenario.inputs.map((input, order) => ({ input, order })).sort((a, b) => a.input.tick - b.input.tick || a.order - b.order).map((x) => x.input);
+    for (const input of scenario.inputs) {
+      const list = this.inputsByTick.get(input.tick) ?? [];
+      list.push(input);
+      this.inputsByTick.set(input.tick, list);
+    }
     // Keep the sample count bounded: widen the stride when a long scenario would exceed the cap.
     const needed = Math.ceil(scenario.maxTicks / scenario.sampleEvery) + 1;
     this.sampleEvery = needed > LIMITS.maxSamples ? Math.ceil(scenario.maxTicks / (LIMITS.maxSamples - 1)) : scenario.sampleEvery;
     if (this.sampleEvery !== scenario.sampleEvery) {
       this.limitations.push(`Sampling stride widened from ${scenario.sampleEvery} to ${this.sampleEvery} ticks to stay within ${LIMITS.maxSamples} samples.`);
     }
+    harness.reset(scenario.seed, this.params, scenario.setup);
+    harness.drainEvents();
+    this.samples.push({ tick: harness.currentTick(), state: harness.snapshot() });
   }
 
   get tick(): number {
-    return this.reached;
+    return this.harness.currentTick();
   }
 
-  resetParams(): BridgeParams<'reset'> {
-    return { seed: this.scenario.seed, params: this.params, setup: this.scenario.setup };
+  /** Advance until the harness reaches `targetTick` (bounded by maxTicks). */
+  advanceTo(targetTick: number): void {
+    if (this.finished) return;
+    const target = Math.min(targetTick, this.scenario.maxTicks);
+    while (this.harness.currentTick() < target) {
+      const t = this.harness.currentTick();
+      const inputs = this.inputsByTick.get(t);
+      if (inputs) {
+        for (const input of inputs) {
+          this.harness.setInput(input.key, input.down);
+          this.appliedInputs.push(input);
+        }
+      }
+      this.harness.step();
+      const now = this.harness.currentTick();
+      for (const raw of this.harness.drainEvents()) {
+        if (this.events.length >= LIMITS.maxEvents) {
+          this.eventsTruncated = true;
+          break;
+        }
+        this.events.push({ seq: this.seq++, tick: now, type: raw.type, data: raw.data ?? {} });
+      }
+      if (now % this.sampleEvery === 0 || now === this.scenario.maxTicks) {
+        this.samples.push({ tick: now, state: this.harness.snapshot() });
+      }
+    }
   }
 
-  start(reset: StateResult): void {
-    this.reached = reset.tick;
-    this.samples.push({ tick: reset.tick, state: reset.state });
-  }
-
-  /** The `advance` request that reaches `targetTick` (bounded by maxTicks), or null when already there. */
-  request(targetTick: number): AdvanceRequest | null {
-    const to = Math.min(targetTick, this.scenario.maxTicks);
-    if (this.finished || this.reached >= to) return null;
-    return {
-      to,
-      inputs: this.inputs.filter((i) => i.tick >= this.reached && i.tick < to),
-      sampleEvery: this.sampleEvery,
-      lastTick: this.scenario.maxTicks,
-      maxEvents: LIMITS.maxEvents - this.events.length,
-    };
-  }
-
-  record(result: AdvanceResult): void {
-    for (const e of result.events) this.events.push({ seq: this.events.length, tick: e.tick, type: e.type, data: e.data });
-    for (const s of result.samples) this.samples.push(s);
-    if (result.truncated) this.eventsTruncated = true;
-    this.reached = result.tick;
-  }
-
-  finish(finalState: FlatState): ScenarioRun {
+  finish(): ScenarioRun {
     if (this.finished) return this.finished;
+    this.advanceTo(this.scenario.maxTicks);
     if (this.eventsTruncated) this.limitations.push(`Event log truncated at ${LIMITS.maxEvents} events; later events were not evaluated.`);
     if (this.sampleEvery > 1) this.limitations.push(`State checks only see every ${this.sampleEvery}th tick.`);
+    const finalState = this.harness.snapshot();
     const ctx: EvalContext = {
       events: this.events,
       samples: this.samples,
       finalState,
       params: this.params,
-      tickRateHz: this.tickRateHz,
+      tickRateHz: this.harness.tickRateHz,
     };
     const assertions = this.scenario.assertions.map((a) => evaluateAssertion(a, ctx));
     const checks = summarizeChecks(assertions);
@@ -188,9 +195,9 @@ export class ScenarioRecorder {
       params: this.params,
       setup: this.scenario.setup,
       stepMode: 'fixed-step',
-      tickRateHz: this.tickRateHz,
-      ticks: this.reached,
-      inputs: this.inputs.filter((i) => i.tick < this.reached),
+      tickRateHz: this.harness.tickRateHz,
+      ticks: this.harness.currentTick(),
+      inputs: this.appliedInputs,
       samples: this.samples,
       events: this.events,
       finalState,
@@ -202,64 +209,6 @@ export class ScenarioRecorder {
     };
     return this.finished;
   }
-}
-
-/**
- * Runs a scenario against an in-process harness, segment by segment, so a caller can take
- * screenshots at checkpoints.
- */
-export class ScenarioExecution {
-  private readonly harness: GameHarness;
-  private readonly recorder: ScenarioRecorder;
-  private readonly maxTicks: number;
-
-  constructor(harness: GameHarness, scenario: Scenario, params: ParameterValues = {}, options: { revision?: string } = {}) {
-    this.harness = harness;
-    this.maxTicks = scenario.maxTicks;
-    this.recorder = new ScenarioRecorder(scenario, params, { revision: options.revision, tickRateHz: harness.tickRateHz });
-    const r = this.recorder.resetParams();
-    harness.reset(r.seed, r.params, r.setup);
-    harness.drainEvents();
-    this.recorder.start({ tick: harness.currentTick(), state: harness.snapshot() });
-  }
-
-  get tick(): number {
-    return this.harness.currentTick();
-  }
-
-  /** Advance until the harness reaches `targetTick` (bounded by maxTicks). */
-  advanceTo(targetTick: number): void {
-    const req = this.recorder.request(targetTick);
-    if (req) this.recorder.record(advanceHarness(this.harness, req));
-  }
-
-  finish(): ScenarioRun {
-    this.advanceTo(this.maxTicks);
-    return this.recorder.finish(this.harness.snapshot());
-  }
-}
-
-/**
- * Runs a scenario through a connected adapter on any engine. `onCheckpoint` runs after each
- * checkpoint tick is reached, e.g. to take a screenshot.
- */
-export async function runScenarioOn(
-  driver: BridgeDriver,
-  scenario: Scenario,
-  params: ParameterValues = {},
-  options: { revision?: string; onCheckpoint?: (tick: number) => Promise<void> } = {},
-): Promise<ScenarioRun> {
-  const recorder = new ScenarioRecorder(scenario, params, { revision: options.revision, tickRateHz: driver.hello.tickRateHz });
-  recorder.start(await driver.call('reset', recorder.resetParams()));
-  const stops = [...new Set(scenario.checkpoints.filter((t) => t <= scenario.maxTicks))].sort((a, b) => a - b);
-  for (const stop of stops) {
-    const req = recorder.request(stop);
-    if (req) recorder.record(await driver.call('advance', req));
-    await options.onCheckpoint?.(recorder.tick);
-  }
-  const rest = recorder.request(scenario.maxTicks);
-  if (rest) recorder.record(await driver.call('advance', rest));
-  return recorder.finish((await driver.call('snapshot', {})).state);
 }
 
 /** Full parameter set for a run: tuning baseline, then scenario params, then caller overrides. */

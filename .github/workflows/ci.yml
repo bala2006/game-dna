@@ -20,7 +20,7 @@ env:
 
 jobs:
   checks:
-    name: Typecheck, docs and unit tests (Node ${{ matrix.node }})
+    name: Typecheck, docs, knowledge and unit tests (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -41,11 +41,15 @@ jobs:
         run: npm run typecheck
       - name: Docs formatting rules (docs/rules.md)
         run: npm run check:docs
+      - name: Knowledge validation (skills, agents, compiled samples)
+        run: npm run check:knowledge
+      - name: Evaluation dataset check
+        run: npm run check:eval
       - name: Unit, property and scenario tests
         run: npx vitest --run --reporter=default --reporter=github-actions
 
   build:
-    name: Build, bridge exclusion and Power bundle freshness
+    name: Build and Power Kit freshness
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -58,13 +62,12 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
-      - name: Build workbench, Power bundle and both games
-        # Each game build fails if the dev-only GameDNA bridge appears in dist/.
+      - name: Build the Power Kit copy and all four games
         run: npm run build
-      - name: Committed power/server matches the source
+      - name: Committed power/kit matches packages/kit
         run: |
-          if ! git diff --exit-code --stat -- power/server power/kit || [ -n "$(git status --porcelain -- power/kit)" ]; then
-            echo "::error title=Stale Power bundle::power/server or power/kit is out of date. Run 'npm run build:workbench && npm run build:power' and commit the result."
+          if ! git diff --exit-code --stat -- power/kit || [ -n "$(git status --porcelain -- power/kit)" ]; then
+            echo "::error title=Stale Power Kit copy::power/kit is out of date. Run 'npm run build:power' and commit the result."
             exit 1
           fi
       - name: Upload game builds
@@ -74,10 +77,12 @@ jobs:
           path: |
             apps/gravity-shift/dist
             apps/neon-survivor/dist
+            apps/ridgeline-racer/dist
+            apps/trail-walk/dist
           retention-days: 7
 
   e2e:
-    name: Browser end-to-end (MCP over stdio, Kit apps, Chromium)
+    name: Browser end-to-end (all four games, Chromium)
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -106,13 +111,3 @@ jobs:
         run: npm run build
       - name: End-to-end tests
         run: npx vitest --run --config vitest.e2e.config.ts --reporter=default --reporter=github-actions
-      - name: MCP latency benchmark (fails if warmed p95 >= 250 ms, PRD 10.2)
-        run: node scripts/bench-mcp.mjs > bench.json; status=$?; cat bench.json; exit $status
-      - name: Upload benchmark
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: mcp-benchmark
-          path: bench.json
-          if-no-files-found: ignore
-          retention-days: 7

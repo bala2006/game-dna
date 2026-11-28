@@ -19,14 +19,6 @@
   },
   "requirementsFile": ".kiro/specs/game/requirements.md",
   "tuningFile": "src/game/tuning.json",
-  "harness": {
-    "module": "src/game/sim.ts",
-    "export": "NeonSurvivorSim"
-  },
-  "viewport": {
-    "width": 960,
-    "height": 540
-  },
   "constraints": [
     {
       "id": "CD-01",
@@ -179,24 +171,6 @@
       "fault": true,
       "group": "fault",
       "description": "SEEDED FAULT for demos: delivers each damage event twice and drops the kill guard, so a kill scores twice"
-    }
-  },
-  "commands": {
-    "dev": {
-      "script": "dev",
-      "kind": "dev",
-      "url": "http://127.0.0.1:5174/",
-      "readyTimeoutMs": 30000
-    },
-    "test": {
-      "script": "test",
-      "kind": "test",
-      "timeoutMs": 120000
-    },
-    "build": {
-      "script": "build",
-      "kind": "build",
-      "timeoutMs": 180000
     }
   },
   "metrics": [

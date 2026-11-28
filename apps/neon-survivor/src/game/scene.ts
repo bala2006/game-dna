@@ -102,7 +102,7 @@ export class NeonScene extends SimScene<NeonSurvivorSim> {
   }
 
   private play(name: (typeof SOUNDS)[number]): void {
-    if (this.controlled || this.settings.muted) return;
+    if (this.settings.muted) return;
     if (this.cache.audio.exists(`sfx-${name}`)) this.sound.play(`sfx-${name}`, { volume: 0.4 });
   }
 
@@ -189,8 +189,7 @@ export class NeonScene extends SimScene<NeonSurvivorSim> {
     this.sparks.setDepth(15);
 
     let body = '';
-    if (this.controlled) body = '';
-    else if (sim.state === 'gameOver') body = `Final score ${sim.score}\n\nPress R to try again`;
+    if (sim.state === 'gameOver') body = `Final score ${sim.score}\n\nPress R to try again`;
     else if (sim.state === 'victory') body = `All waves cleared. Score ${sim.score}\n\nPress R to play again`;
     else if (this.uiMode === 'title') body = 'Press Enter to begin\n\nArrows / WASD  move   ·   Space / J  pulse attack\nR  restart   ·   P  pause   ·   V  reduced motion   ·   M  mute';
     else if (this.uiMode === 'paused') body = 'Paused\n\nPress P to continue';

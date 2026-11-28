@@ -1,14 +1,22 @@
+import { bounceOffWall, createVehicleState, createVehicleStep, stepVehicle } from '@gamedna/kit/handling';
 import { clamp, wrapAngle } from '@gamedna/kit/random';
 import type { GroundPoint } from '@gamedna/kit/world';
 import { ROAD, type Track } from './track.js';
+import { stepSeconds } from '@gamedna/kit/contracts';
+import { CONTRACTS } from './contracts.js';
 
-export const DT = 1 / 60;
+/** Fixed timestep in seconds, from the simulation contract. */
+export const DT = stepSeconds(CONTRACTS);
 export const LAPS = 3;
 export const COUNTDOWN_TICKS = 180;
+/** Handling for the Kit `stepVehicle` (see `VehicleTuning`), plus the off-road limit and the drawn wheel angle. */
 export const TUNE = {
-  top: 52, accel: 14, brake: 38, coast: 4, reverseAccel: 10, reverseTop: 9, offTop: 20,
-  steerRate: 7, yaw: 2.1, gripKeep: 0.32, driftKeep: 0.93, maxWheel: 0.42,
+  top: 52, accel: 14, accelFade: 0.35, reverseThrottle: 2.5, brake: 38, coast: 4, pedalDeadzone: 0.05, reverseAccel: 10, reverseTop: 9,
+  offTop: 20, overspeedBleed: 2.2, steerRate: 7, yaw: 2.1, yawSpeed: 8, yawFade: 0.5, driftYaw: 1.45,
+  gripKeep: 0.32, gripGain: 0.25, driftKeep: 0.93, maxWheel: 0.42,
 } as const;
+/** Barrier response: share of the impact speed bounced back, velocity kept after a hit, and the hit event scale. */
+const BARRIER = { restitution: 0.3, keep: 0.95, minHit: 2, fullHit: 18 } as const;
 
 /** One tick of driver input. `steer` is -1 to 1, positive to the left. */
 export interface Controls { steer: number; throttle: number; brake: number; drift: boolean }
@@ -49,6 +57,8 @@ export class RaceSim {
   readonly car: CarState = { x: 0, z: 0, h: 0, vx: 0, vz: 0, vf: 0, accel: 0, latAccel: 0, steer: 0, slip: 0, offroad: false, braking: false, prev: { x: 0, z: 0, h: 0 } };
   readonly race: RaceState = { phase: 'countdown', tick: 0, phaseTick: 0, lap: 1, lapStart: 0, laps: [], best: null, idx: 0, cp: 0, paused: false };
   private events: RaceEvent[] = [];
+  private readonly vehicle = createVehicleState();
+  private readonly handling = createVehicleStep();
 
   constructor(readonly track: Track) {
     this.reset();
@@ -88,35 +98,30 @@ export class RaceSim {
   }
 
   private stepCar(c: Controls): number {
-    const car = this.car, race = this.race, S = this.track.count;
+    const car = this.car, race = this.race, S = this.track.count, v = this.vehicle;
     car.prev = { x: car.x, z: car.z, h: car.h };
-    const vfPrev = car.vx * Math.sin(car.h) + car.vz * Math.cos(car.h);
-    car.steer += (c.steer - car.steer) * Math.min(1, TUNE.steerRate * DT);
-    const sp = Math.abs(vfPrev);
-    car.h += car.steer * TUNE.yaw * Math.min(1, sp / 8) * (1 - 0.5 * Math.min(1, sp / TUNE.top)) * (c.drift ? 1.45 : 1) * (vfPrev < 0 ? -1 : 1) * DT;
-    const fx = Math.sin(car.h), fz = Math.cos(car.h);
-    let vf = car.vx * fx + car.vz * fz;
-    let lx = car.vx - fx * vf, lz = car.vz - fz * vf;
-    vf += c.throttle * TUNE.accel * DT * (vf < 0 ? 2.5 : 1) * (1 - 0.35 * Math.min(1, Math.max(0, vf) / TUNE.top));
-    vf -= c.brake * (vf > 0 ? TUNE.brake : TUNE.reverseAccel) * DT;
-    if (c.throttle < 0.05 && c.brake < 0.05) vf -= Math.sign(vf) * Math.min(Math.abs(vf), TUNE.coast * DT);
-    const top = car.offroad ? TUNE.offTop : TUNE.top;
-    if (vf > top) vf -= (vf - top) * 2.2 * DT;
-    vf = clamp(vf, -TUNE.reverseTop, TUNE.top);
-    const keep = c.drift ? TUNE.driftKeep : TUNE.gripKeep + 0.25 * Math.min(1, Math.abs(vf) / TUNE.top);
-    const k = Math.pow(keep, DT * 60);
-    lx *= k;
-    lz *= k;
-    car.vx = fx * vf + lx;
-    car.vz = fz * vf + lz;
-    car.x += car.vx * DT;
-    car.z += car.vz * DT;
-    car.slip = Math.hypot(lx, lz);
-    car.accel = (vf - vfPrev) / DT;
-    car.latAccel = car.steer * TUNE.yaw * Math.min(1, Math.abs(vf) / 8) * vf * 0.9;
-    car.vf = vf;
-    car.braking = c.brake > 0.2 && vf > 1;
+    v.x = car.x;
+    v.z = car.z;
+    v.heading = car.h;
+    v.vx = car.vx;
+    v.vz = car.vz;
+    v.steer = car.steer;
+    const step = stepVehicle(v, c, TUNE, DT, this.handling, car.offroad ? TUNE.offTop : TUNE.top);
+    car.x = v.x;
+    car.z = v.z;
+    car.h = v.heading;
+    car.vx = v.vx;
+    car.vz = v.vz;
+    car.vf = v.speed;
+    car.steer = v.steer;
+    car.slip = step.slip;
+    car.accel = step.accel;
+    // Body-roll cue for the view: full-lock yaw at this speed, not the faded or drifting rate.
+    car.latAccel = car.steer * TUNE.yaw * Math.min(1, Math.abs(car.vf) / TUNE.yawSpeed) * car.vf * 0.9;
+    car.braking = c.brake > 0.2 && car.vf > 1;
 
+    // Nearest track point, searched in a window around the last one so the index cannot jump to a
+    // nearby stretch of the circuit. Kit PathIndex returns the nearest segment globally, which is not the same.
     let best = Infinity, bi = race.idx;
     const consider = (i: number) => { const p = this.point(i), d = (p.x - car.x) ** 2 + (p.z - car.z) ** 2; if (d < best) { best = d; bi = (i + S) % S; } };
     for (let o = -30; o <= 30; o++) consider(race.idx + o);
@@ -126,17 +131,9 @@ export class RaceSim {
     const p = this.point(bi), t = this.track.frames.tangents[bi] as GroundPoint, nx = -t.z, nz = t.x;
     const off = (car.x - p.x) * nx + (car.z - p.z) * nz, lim = ROAD.rail - 1.15;
     if (Math.abs(off) > lim) {
-      const sgn = Math.sign(off), push = off - sgn * lim;
-      car.x -= nx * push;
-      car.z -= nz * push;
-      const vn = car.vx * nx + car.vz * nz;
-      if (vn * sgn > 0) {
-        car.vx -= nx * vn * 1.3;
-        car.vz -= nz * vn * 1.3;
-        car.vx *= 0.95;
-        car.vz *= 0.95;
-        if (Math.abs(vn) > 2) this.events.push({ type: 'hit', power: Math.min(1, Math.abs(vn) / 18) });
-      }
+      const sgn = Math.sign(off);
+      const impact = bounceOffWall(car, -sgn * nx, -sgn * nz, Math.abs(off) - lim, BARRIER.restitution, BARRIER.keep);
+      if (impact > BARRIER.minHit) this.events.push({ type: 'hit', power: Math.min(1, impact / BARRIER.fullHit) });
     }
     car.offroad = Math.abs(off) > ROAD.width / 2 + ROAD.curb;
     return prevIdx;

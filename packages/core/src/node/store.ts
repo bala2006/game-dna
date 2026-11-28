@@ -43,7 +43,7 @@ export function sha256(data: string | Uint8Array): string {
   return createHash('sha256').update(data).digest('hex');
 }
 
-/** Short random ID suffix for experiments, decisions, traces and artifacts. */
+/** Short random ID suffix for traces and generated artifacts. */
 export function newId(prefix: string, now = new Date()): string {
   const stamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 14);
   return `${prefix}-${stamp}-${randomBytes(3).toString('hex')}`;

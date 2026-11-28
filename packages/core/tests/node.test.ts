@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync, readFileSync } from
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { computeRevision, resolveInside, writeJsonAtomic } from '../src/node/index.js';
+import { resolveInside, writeJsonAtomic } from '../src/node/index.js';
 
 const tmp = () => mkdtempSync(path.join(os.tmpdir(), 'gamedna-core-'));
 
@@ -24,15 +24,7 @@ describe('path guard', () => {
   });
 });
 
-describe('revision and atomic store', () => {
-  it('changes revision when a baseline file changes', () => {
-    const root = tmp();
-    writeFileSync(path.join(root, 't.json'), '{"a":1}');
-    const r1 = computeRevision(root, ['t.json']);
-    expect(computeRevision(root, ['t.json'])).toBe(r1);
-    writeFileSync(path.join(root, 't.json'), '{"a":2}');
-    expect(computeRevision(root, ['t.json'])).not.toBe(r1);
-  });
+describe('atomic store', () => {
   it('writes JSON atomically into new directories', () => {
     const root = tmp();
     mkdirSync(path.join(root, 'x'));

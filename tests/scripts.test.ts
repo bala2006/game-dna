@@ -11,26 +11,6 @@ afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 
 const run = (script: string, args: string[], cwd = root) => spawnSync(process.execPath, [path.join(root, 'scripts', script), ...args], { cwd, encoding: 'utf8' });
 
-describe('check-prod-bridge.mjs', () => {
-  it('passes a clean build and fails when a bridge marker leaks', () => {
-    const clean = path.join(tmp, 'clean/assets');
-    mkdirSync(clean, { recursive: true });
-    writeFileSync(path.join(clean, 'index.js'), 'console.log("game")');
-    expect(run('check-prod-bridge.mjs', [path.dirname(clean)]).status).toBe(0);
-
-    const leaky = path.join(tmp, 'leaky');
-    mkdirSync(leaky, { recursive: true });
-    writeFileSync(path.join(leaky, 'index.js'), 'window.__GAMEDNA__ = {}');
-    const r = run('check-prod-bridge.mjs', [leaky]);
-    expect(r.status).toBe(1);
-    expect(r.stderr).toContain('__GAMEDNA__');
-  });
-
-  it('fails when the build folder is missing', () => {
-    expect(run('check-prod-bridge.mjs', [path.join(tmp, 'nope')]).status).toBe(1);
-  });
-});
-
 describe('copy-licenses.mjs', () => {
   it('writes the license text of the named packages', () => {
     const dist = path.join(tmp, 'dist');
