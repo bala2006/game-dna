@@ -1,0 +1,39 @@
+; GameDNA conformance fixture. The adapter in res://addons/gamedna/ is copied in by the test
+; from power/adapters/godot/addons/gamedna/ and is not committed here.
+
+config_version=5
+
+[application]
+
+config/name="GameDNA Mini"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+GameDNA="*res://addons/gamedna/gamedna.gd"
+
+[display]
+
+window/size/viewport_width=320
+window/size/viewport_height=180
+
+[input]
+
+right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":4194321), Object(InputEventKey,"physical_keycode":68)]
+}
+jump={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":32), Object(InputEventKey,"physical_keycode":4194320)]
+}
+
+[physics]
+
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

@@ -1,0 +1,27 @@
+{
+  "id": "walk-jump",
+  "description": "Hold right for 200 ticks and jump twice, holding the second jump through its landing. The odd length makes the last tick a sample.",
+  "seed": 7,
+  "maxTicks": 241,
+  "inputs": [
+    { "tick": 0, "key": "right", "down": true },
+    { "tick": 30, "key": "jump", "down": true },
+    { "tick": 36, "key": "jump", "down": false },
+    { "tick": 90, "key": "jump", "down": true },
+    { "tick": 120, "key": "jump", "down": false },
+    { "tick": 200, "key": "right", "down": false }
+  ],
+  "checkpoints": [60, 120],
+  "sampleEvery": 2,
+  "assertions": [
+    { "type": "stateAtEnd", "checkId": "WALK-01", "path": "player.x", "op": "eq", "value": 600 },
+    { "type": "eventCount", "checkId": "JUMP-01", "event": "jump", "op": "eq", "value": 2 },
+    { "type": "eventCount", "checkId": "JUMP-01", "event": "land", "op": "eq", "value": 2 },
+    { "type": "stateAlways", "checkId": "JUMP-01", "path": "player.y", "op": "gte", "value": 0 },
+    { "type": "stateAtEnd", "checkId": "JUMP-01", "path": "player.grounded", "op": "eq", "value": true },
+    { "type": "eventCount", "checkId": "COIN-01", "event": "coin", "op": "eq", "value": 11 },
+    { "type": "eventUnique", "checkId": "COIN-01", "event": "coin", "key": "n" },
+    { "type": "stateAtEnd", "checkId": "COIN-01", "path": "coins", "op": "eq", "value": 11 }
+  ],
+  "tags": ["conformance", "godot"]
+}

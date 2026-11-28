@@ -1,11 +1,16 @@
-import { spawn, type ChildProcess } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { GameDNAError, LoopbackUrlSchema, type ProjectRecord } from '@gamedna/core';
-import { readPackage, resolveFromProject } from './project.js';
+import { listenBridge, type BridgeListener, type SocketDriver } from './bridge-server.js';
+import { killTree, prepareCommand, spawnCommand } from './commands.js';
+import type { EngineProfile } from './engines.js';
+import { resolveFromProject } from './project.js';
 
 const MAX_SESSIONS = 2;
 const MAX_LOG_LINES = 200;
+/** How long a tool call on an attach session waits for the game to connect. */
+const ATTACH_WAIT_MS = 30_000;
 
 /** The subset of Playwright's API GameDNA uses. Playwright is loaded from the game project. */
 export interface PageLike {
@@ -22,24 +27,45 @@ interface BrowserLike {
   version(): string;
 }
 
-export interface Session {
+interface SessionBase {
   id: string;
   projectId: string;
   root: string;
-  url: string;
   startedAt: string;
-  spawned: boolean;
+  /** The process this session started, if any. Only that process is stopped with the session. */
   process: ChildProcess | null;
-  browser: BrowserLike;
-  page: PageLike;
-  browserVersion: string;
   logs: string[];
   errors: string[];
 }
 
+export interface BrowserSession extends SessionBase {
+  runtime: 'browser';
+  url: string;
+  spawned: boolean;
+  browser: BrowserLike;
+  page: PageLike;
+  browserVersion: string;
+}
+
+/** A native game on the loopback bridge, either launched from a declared command or attached. */
+export interface ProcessSession extends SessionBase {
+  runtime: 'process';
+  commandId: string | null;
+  bridge: BridgeListener;
+  token: string;
+  launchEnv: { GAMEDNA_BRIDGE: string; GAMEDNA_TOKEN: string };
+}
+
+export type Session = BrowserSession | ProcessSession;
+
 function pushBounded(list: string[], line: string): void {
   list.push(line.slice(0, 500));
   if (list.length > MAX_LOG_LINES) list.shift();
+}
+
+function capture(child: ChildProcess, logs: string[], errors: string[]): void {
+  child.stdout?.on('data', (d: Buffer) => pushBounded(logs, d.toString()));
+  child.stderr?.on('data', (d: Buffer) => pushBounded(errors, d.toString()));
 }
 
 async function reachable(url: string): Promise<boolean> {
@@ -51,18 +77,21 @@ async function reachable(url: string): Promise<boolean> {
   }
 }
 
-function killTree(child: ChildProcess | null): void {
-  if (!child || child.exitCode !== null || child.pid === undefined) return;
-  try {
-    // Negative PID signals the whole process group created with detached: true.
-    process.kill(-child.pid, 'SIGTERM');
-  } catch {
-    try {
-      child.kill('SIGTERM');
-    } catch {
-      // already gone
-    }
-  }
+/** Resolves with the exit code when the child exits, and never when it keeps running. */
+function exited(child: ChildProcess): Promise<number | null> {
+  return new Promise((resolve) => {
+    if (child.exitCode !== null) resolve(child.exitCode);
+    child.once('exit', (code) => resolve(code));
+    child.once('error', () => resolve(null));
+  });
+}
+
+interface StartArgs {
+  root: string;
+  record: ProjectRecord;
+  profile: EngineProfile;
+  commandId?: string;
+  url?: string;
 }
 
 export class SessionManager {
@@ -82,22 +111,73 @@ export class SessionManager {
     return this.list().find((s) => s.projectId === projectId);
   }
 
-  async start(args: { root: string; record: ProjectRecord; commandId?: string; url?: string }): Promise<Session> {
+  async start(args: StartArgs): Promise<Session> {
     if (this.sessions.size >= MAX_SESSIONS) throw new GameDNAError('LIMIT_EXCEEDED', `At most ${MAX_SESSIONS} sessions may run at once`, { fix: 'Stop a session with gd_stop_session.' });
+    const id = `ses-${randomBytes(4).toString('hex')}`;
+    let session: Session;
+    if (args.profile.runtime === 'browser') session = await this.startBrowser(id, args);
+    else if (args.profile.runtime === 'process') session = await this.startProcess(id, args);
+    else throw new GameDNAError('UNSUPPORTED_ENGINE', `${args.profile.label} sessions are not implemented yet (phase 3: adb reverse and on-device launch)`);
+    this.sessions.set(id, session);
+    return session;
+  }
+
+  /** The adapter of a process session. An attach session waits (bounded) for the game to connect. */
+  async driver(session: ProcessSession): Promise<SocketDriver> {
+    let driver: SocketDriver;
+    try {
+      driver = await session.bridge.waitForHello(ATTACH_WAIT_MS);
+    } catch (err) {
+      throw new GameDNAError('SESSION_NOT_READY', `The game has not connected to session ${session.id} yet`, {
+        fix: `Launch the game with GAMEDNA_BRIDGE=${session.launchEnv.GAMEDNA_BRIDGE} and GAMEDNA_TOKEN set (see gd_start_session's launchEnv), then retry.`,
+        details: { cause: (err as Error).message },
+      });
+    }
+    if (driver.closed) throw new GameDNAError('SESSION_NOT_READY', `The game of session ${session.id} disconnected`, { fix: 'Stop the session with gd_stop_session and start a new one.', details: { stderr: session.errors.slice(-10) } });
+    return driver;
+  }
+
+  private async startProcess(id: string, args: StartArgs): Promise<ProcessSession> {
+    if (args.url) throw new GameDNAError('INVALID_INPUT', `${args.profile.label} sessions do not take a url; pass commandId, or nothing to attach to a game you launch yourself`);
+    const cmd = args.commandId ? prepareCommand({ ...args, commandId: args.commandId, kinds: ['run', 'headless'], purpose: 'a process session' }) : null;
+    const token = randomBytes(16).toString('hex');
+    const bridge = await listenBridge({ token, sessionId: id });
+    const launchEnv = { GAMEDNA_BRIDGE: bridge.address, GAMEDNA_TOKEN: token };
+    const session: ProcessSession = { id, runtime: 'process', projectId: args.record.projectId, root: args.root, startedAt: new Date().toISOString(), process: null, logs: [], errors: [], commandId: cmd?.id ?? null, bridge, token, launchEnv };
+    if (!cmd) return session;
+    try {
+      session.process = spawnCommand(cmd, launchEnv);
+    } catch (err) {
+      await bridge.close();
+      throw err;
+    }
+    capture(session.process, session.logs, session.errors);
+    const outcome = await Promise.race([
+      bridge.waitForHello(cmd.readyTimeoutMs).then(
+        () => 'ready' as const,
+        () => 'timeout' as const,
+      ),
+      exited(session.process).then((code) => ({ code })),
+    ]);
+    if (outcome === 'ready') return session;
+    await killTree(session.process);
+    await bridge.close();
+    if (outcome === 'timeout') {
+      throw new GameDNAError('ADAPTER_MISSING', `"${cmd.display}" started, but no GameDNA adapter said hello within ${cmd.readyTimeoutMs} ms`, {
+        fix: 'Install the adapter with gd_install_adapter, add its wiring lines, and make sure the command starts a development build.',
+        details: { stderr: session.errors.slice(-10) },
+      });
+    }
+    throw new GameDNAError('SESSION_NOT_READY', `"${cmd.display}" exited with code ${outcome.code} before the adapter said hello`, { details: { stderr: session.errors.slice(-10), stdout: session.logs.slice(-5) } });
+  }
+
+  private async startBrowser(id: string, args: StartArgs): Promise<BrowserSession> {
     const { root, record } = args;
     let url: string;
-    let script: string | null = null;
-    let readyTimeoutMs = 30_000;
-    if (args.commandId) {
-      const cmd = record.commands[args.commandId];
-      if (!cmd) throw new GameDNAError('PERMISSION_DENIED', `Command "${args.commandId}" is not declared in .gamedna/project.json`, { details: { declared: Object.keys(record.commands) } });
-      if (cmd.kind !== 'dev') throw new GameDNAError('PERMISSION_DENIED', `Command "${args.commandId}" is a ${cmd.kind} command; sessions need a dev command`);
-      if (!cmd.url) throw new GameDNAError('INVALID_INPUT', `Command "${args.commandId}" has no url to attach to`);
-      const pkg = readPackage(root);
-      if (!pkg.scripts[cmd.script]) throw new GameDNAError('PERMISSION_DENIED', `package.json has no "${cmd.script}" script`);
-      script = cmd.script;
+    const cmd = args.commandId ? prepareCommand({ ...args, commandId: args.commandId, kinds: ['dev'], purpose: 'a browser session' }) : null;
+    if (cmd) {
+      if (!cmd.url) throw new GameDNAError('INVALID_INPUT', `Command "${cmd.id}" has no url to attach to`);
       url = cmd.url;
-      readyTimeoutMs = cmd.readyTimeoutMs;
     } else if (args.url) {
       const parsed = LoopbackUrlSchema.safeParse(args.url);
       if (!parsed.success) throw new GameDNAError('PERMISSION_DENIED', 'Only http loopback URLs with a port are allowed (127.0.0.1, localhost, [::1])');
@@ -113,23 +193,19 @@ export class SessionManager {
       });
     }
 
-    const id = `ses-${randomBytes(4).toString('hex')}`;
     const logs: string[] = [];
     const errors: string[] = [];
     let child: ChildProcess | null = null;
     const already = await reachable(url);
-    if (!already && script) {
-      const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-      // Argument array, no shell: only the declared package.json script can run.
-      child = spawn(npm, ['run', script], { cwd: root, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, BROWSER: 'none', FORCE_COLOR: '0' } });
-      child.stdout?.on('data', (d: Buffer) => pushBounded(logs, d.toString()));
-      child.stderr?.on('data', (d: Buffer) => pushBounded(errors, d.toString()));
-      const deadline = Date.now() + readyTimeoutMs;
+    if (!already && cmd) {
+      child = spawnCommand(cmd, { BROWSER: 'none' });
+      capture(child, logs, errors);
+      const deadline = Date.now() + cmd.readyTimeoutMs;
       while (!(await reachable(url))) {
         if (child.exitCode !== null) throw new GameDNAError('SESSION_NOT_READY', `Dev command exited with code ${child.exitCode}`, { details: { stderr: errors.slice(-10) } });
         if (Date.now() > deadline) {
-          killTree(child);
-          throw new GameDNAError('TIMEOUT', `Dev server did not answer at ${url} within ${readyTimeoutMs} ms`, { details: { stderr: errors.slice(-10) } });
+          await killTree(child);
+          throw new GameDNAError('TIMEOUT', `Dev server did not answer at ${url} within ${cmd.readyTimeoutMs} ms`, { details: { stderr: errors.slice(-10) } });
         }
         await new Promise((r) => setTimeout(r, 300));
       }
@@ -144,7 +220,7 @@ export class SessionManager {
       if (!chromium) throw new Error('playwright.chromium not found');
       browser = await chromium.launch({ headless: true });
     } catch (err) {
-      killTree(child);
+      await killTree(child);
       throw new GameDNAError('SESSION_NOT_READY', `Could not launch Chromium: ${(err as Error).message.split('\n')[0]}`, { fix: 'Run `npx playwright install chromium` in the game project.' });
     }
     const page = await browser.newPage({ viewport: { width: record.viewport.width, height: record.viewport.height } });
@@ -153,20 +229,19 @@ export class SessionManager {
       const msg = m as { type(): string; text(): string };
       if (msg.type() === 'error') pushBounded(errors, `console: ${msg.text()}`);
     });
-    const session: Session = { id, projectId: record.projectId, root, url, startedAt: new Date().toISOString(), spawned: child !== null, process: child, browser, page, browserVersion: browser.version(), logs, errors };
+    const session: BrowserSession = { id, runtime: 'browser', projectId: record.projectId, root, url, startedAt: new Date().toISOString(), spawned: child !== null, process: child, browser, page, browserVersion: browser.version(), logs, errors };
     try {
       await this.load(session);
     } catch (err) {
       await browser.close().catch(() => undefined);
-      killTree(child);
+      await killTree(child);
       throw err;
     }
-    this.sessions.set(id, session);
     return session;
   }
 
   /** Navigate (or reload) and wait for the dev bridge. */
-  async load(session: Session, reload = false): Promise<void> {
+  async load(session: BrowserSession, reload = false): Promise<void> {
     const target = `${session.url}${session.url.includes('?') ? '&' : '?'}gamedna=1`;
     if (reload) await session.page.reload({ waitUntil: 'load' });
     else await session.page.goto(target, { waitUntil: 'load', timeout: 30_000 });
@@ -180,17 +255,22 @@ export class SessionManager {
     }
   }
 
-  async stop(id: string): Promise<{ sessionId: string; browserClosed: boolean; processStopped: boolean; attachedOnly: boolean }> {
+  async stop(id: string): Promise<Record<string, unknown>> {
     const s = this.get(id);
     this.sessions.delete(id);
+    if (s.runtime === 'process') {
+      await s.bridge.close();
+      await killTree(s.process);
+      return { sessionId: id, runtime: 'process', socketClosed: true, processStopped: s.process !== null, attachedOnly: s.process === null };
+    }
     let browserClosed = true;
     try {
       await s.browser.close();
     } catch {
       browserClosed = false;
     }
-    killTree(s.process);
-    return { sessionId: id, browserClosed, processStopped: s.process ? true : false, attachedOnly: !s.spawned };
+    await killTree(s.process);
+    return { sessionId: id, runtime: 'browser', browserClosed, processStopped: s.process !== null, attachedOnly: !s.spawned };
   }
 
   async stopAll(): Promise<void> {

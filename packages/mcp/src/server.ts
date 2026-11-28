@@ -4,17 +4,19 @@ import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { GAMEDNA_VERSION, isGameDNAError, LIMITS } from '@gamedna/core';
+import { GAMEDNA_VERSION, isGameDNAError, LIMITS, ToolNameSchema } from '@gamedna/core';
 import { ASSET_TYPES, STYLE_PACK_IDS } from '@gamedna/assets';
 import { closeAllHarnesses } from './headless.js';
 import { SessionManager } from './session.js';
 import {
   compareExperiment,
+  configureTool,
   createExperimentTool,
   exportReport,
   generateAssetTool,
   getSelection,
   getStylePackTool,
+  installAdapter,
   observe,
   prepareChange,
   projectStatus,
@@ -53,7 +55,7 @@ export function createContext(workspaceRoot: string, staticDir: string | null): 
     projects: () =>
       [...registry.entries()].map(([projectId, p]) => {
         const s = sessions.forProject(projectId);
-        let gameUrl: string | null = s?.url ?? null;
+        let gameUrl: string | null = s?.runtime === 'browser' ? s.url : null;
         if (!gameUrl) {
           try {
             gameUrl = (JSON.parse(readFileSync(path.join(p.root, '.gamedna/project.json'), 'utf8')) as { commands?: { dev?: { url?: string } } }).commands?.dev?.url ?? null;
@@ -99,7 +101,7 @@ export function createServer(ctx: ToolContext): McpServer {
 
   server.registerTool(
     'gd_project_status',
-    { title: 'Project status', description: 'Detect a Phaser project, its engine version, package manager, adapter, GameDNA record, scenarios, experiments, decisions and sessions. Returns UNSUPPORTED_ENGINE for non-Phaser projects.', inputSchema: { projectPath } },
+    { title: 'Project status', description: 'Detect the engine (Godot, Unity, Unreal, Android Kotlin or C++, Phaser, three.js, HTML/JavaScript, or a declared custom engine) with its version, runtime, verified flag, adapter state and resolved engine tools, plus the GameDNA record, scenarios, experiments, decisions and sessions. Read-only. Xcode projects get UNSUPPORTED_ENGINE.', inputSchema: { projectPath } },
     wrap((a: { projectPath?: string }) => projectStatus(ctx, a)),
   );
   server.registerTool(
@@ -116,7 +118,7 @@ export function createServer(ctx: ToolContext): McpServer {
     'gd_generate_asset',
     {
       title: 'Generate procedural asset',
-      description: `Generate a deterministic original asset (${ASSET_TYPES.join(', ')}) in a style pack, write it under the project and record provenance in .gamedna/assets-manifest.json. Same inputs and seed give identical bytes.`,
+      description: `Generate a deterministic original asset (${ASSET_TYPES.join(', ')}) in a style pack, write it under the project (default: the engine's asset folder) and record provenance in .gamedna/assets-manifest.json. Same inputs and seed give identical bytes.`,
       inputSchema: {
         projectPath,
         id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,62}$/).describe('File name without extension'),
@@ -135,12 +137,17 @@ export function createServer(ctx: ToolContext): McpServer {
   );
   server.registerTool(
     'gd_start_session',
-    { title: 'Start play session', description: 'Run an approved dev command from project.json (or attach to a loopback URL), open headless Chromium and wait for the dev-only adapter. No arbitrary shell commands.', inputSchema: { projectPath, commandId: z.string().max(31).optional(), url: z.string().max(200).optional() } },
+    {
+      title: 'Start play session',
+      description:
+        'Browser games: run an approved dev command from project.json (or attach to a loopback URL), open headless Chromium and wait for the dev-only adapter. Native games: with a run or headless commandId, launch it with GAMEDNA_BRIDGE and GAMEDNA_TOKEN and wait for the adapter on 127.0.0.1; without one, return launchEnv so you can launch the game yourself (for example from the editor) and it connects. No arbitrary shell commands.',
+      inputSchema: { projectPath, commandId: z.string().max(31).optional(), url: z.string().max(200).optional() },
+    },
     wrap((a: { projectPath?: string; commandId?: string; url?: string }) => startSession(ctx, a)),
   );
   server.registerTool(
     'gd_stop_session',
-    { title: 'Stop play session', description: 'Close the browser and stop the dev server started for a session.', inputSchema: { sessionId: z.string().max(40) } },
+    { title: 'Stop play session', description: 'Close the browser or bridge connection, and stop the dev server or game process only if this session started it.', inputSchema: { sessionId: z.string().max(40) } },
     wrap((a: { sessionId: string }) => stopSession(ctx, a)),
   );
   server.registerTool(
@@ -150,7 +157,7 @@ export function createServer(ctx: ToolContext): McpServer {
   );
   server.registerTool(
     'gd_run_scenario',
-    { title: 'Run scenario', description: `Run a scenario from .gamedna/scenarios with fixed-step input playback, assertions and metrics. Use sessionId for the real browser (with screenshots) or projectPath alone for a fast headless run. repeat 2-${LIMITS.maxRepeat} measures reproducibility; params may enable labeled fault switches.`, inputSchema: { projectPath: projectPath.optional(), sessionId: z.string().max(40).optional(), scenarioId: z.string().max(63), seed: z.number().int().min(0).optional(), repeat: z.number().int().min(1).max(LIMITS.maxRepeat).optional(), params: paramValues.optional(), screenshots: z.boolean().optional() } },
+    { title: 'Run scenario', description: `Run a scenario from .gamedna/scenarios with fixed-step input playback, assertions and metrics. Use sessionId for a running game (browser or native, with screenshots when the adapter offers them) or projectPath alone: browser engines run the harness module headlessly, native engines launch the record's headless command for this call and stop it afterwards. repeat 2-${LIMITS.maxRepeat} measures reproducibility; params may enable labeled fault switches.`, inputSchema: { projectPath: projectPath.optional(), sessionId: z.string().max(40).optional(), scenarioId: z.string().max(63), seed: z.number().int().min(0).optional(), repeat: z.number().int().min(1).max(LIMITS.maxRepeat).optional(), params: paramValues.optional(), screenshots: z.boolean().optional() } },
     wrap((a: { projectPath?: string; sessionId?: string; scenarioId: string; seed?: number; repeat?: number; params?: Record<string, number | boolean>; screenshots?: boolean }) => runScenarioTool(ctx, a)),
   );
   server.registerTool(
@@ -198,6 +205,26 @@ export function createServer(ctx: ToolContext): McpServer {
     'gd_export_report',
     { title: 'Export evidence report', description: 'Write a local Markdown and JSON evidence report (runs, checks, experiments, decisions, asset provenance, limitations) under .gamedna/reports.', inputSchema: { projectPath, traceIds: z.array(z.string().max(80)).max(50).optional() } },
     wrap((a: { projectPath?: string; traceIds?: string[] }) => exportReport(ctx, a)),
+  );
+  server.registerTool(
+    'gd_install_adapter',
+    {
+      title: 'Install engine adapter',
+      description:
+        "Copy the engine's dev-only GameDNA adapter from the Power into the project (Godot: addons/gamedna/) and return the wiring lines Kiro must add. Refuses to replace a file with different content unless overwrite is true. GameDNA never edits game code: it only writes the adapter files.",
+      inputSchema: { projectPath, overwrite: z.boolean().optional() },
+    },
+    wrap((a: { projectPath?: string; overwrite?: boolean }) => installAdapter(ctx, a)),
+  );
+  server.registerTool(
+    'gd_configure_tool',
+    {
+      title: 'Configure engine tool path',
+      description:
+        'Store the absolute path of an engine tool (godot, unity, unreal-editor, adb, ...) in the user config folder, never in a repository, after checking the file exists, its name matches the tool and it is not a shell or interpreter. path null removes the entry. GameDNA never edits game code.',
+      inputSchema: { tool: ToolNameSchema, path: z.string().min(1).max(1000).nullable() },
+    },
+    wrap((a: { tool: string; path: string | null }) => configureTool(a)),
   );
   return server;
 }

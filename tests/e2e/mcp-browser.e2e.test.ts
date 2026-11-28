@@ -50,10 +50,10 @@ afterAll(async () => {
 });
 
 describe('Power bundle over stdio with a real browser', () => {
-  it('lists all 15 tools', async () => {
+  it('lists all 17 tools', async () => {
     const tools = await client.listTools();
     expect(tools.tools.map((t) => t.name).sort()).toEqual(
-      ['gd_compare_experiment', 'gd_create_experiment', 'gd_export_report', 'gd_generate_asset', 'gd_get_selection', 'gd_get_style_pack', 'gd_observe', 'gd_prepare_change', 'gd_project_status', 'gd_record_selection', 'gd_run_scenario', 'gd_start_session', 'gd_stop_session', 'gd_validate_design', 'gd_verify'].sort(),
+      ['gd_compare_experiment', 'gd_configure_tool', 'gd_create_experiment', 'gd_export_report', 'gd_generate_asset', 'gd_get_selection', 'gd_get_style_pack', 'gd_install_adapter', 'gd_observe', 'gd_prepare_change', 'gd_project_status', 'gd_record_selection', 'gd_run_scenario', 'gd_start_session', 'gd_stop_session', 'gd_validate_design', 'gd_verify'].sort(),
     );
   });
 

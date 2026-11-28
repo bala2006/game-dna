@@ -5,7 +5,7 @@ description: Build and check 3D games in three.js on the GameDNA Kit. Vite or on
 
 # three.js
 
-GameDNA's MCP tools load Phaser projects only. For three.js, this skill replaces them: you write the checks with Playwright, and a `?dev` hook stands in for `gd_observe`.
+GameDNA's MCP tools have no three.js adapter yet. Until it ships, this skill replaces them: you write the checks with Playwright, and a `?dev` hook stands in for `gd_observe`.
 
 Build on the GameDNA Kit (`packages/kit`, README there). It is the tested foundation for every 3D step; write only the game's own rules and dressing. Two apps show the whole shape: `apps/ridgeline-racer` (driving) and `apps/trail-walk` (on foot).
 

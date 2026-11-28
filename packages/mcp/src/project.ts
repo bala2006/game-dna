@@ -18,23 +18,13 @@ import {
 } from '@gamedna/core';
 import { computeRevision, readJsonFile, resolveInside, writeJsonAtomic } from '@gamedna/core/node';
 import { z } from 'zod';
+import type { DetectedEngine } from './engines.js';
 
 export const RECORD_FILE = '.gamedna/project.json';
 export const DECISIONS_FILE = '.gamedna/decisions.json';
 export const SCENARIO_DIR = '.gamedna/scenarios';
 export const EXPERIMENT_DIR = '.gamedna/experiments';
 export const EVIDENCE_DIR = '.gamedna/evidence';
-
-const OTHER_ENGINES: Record<string, string> = {
-  'pixi.js': 'PixiJS',
-  three: 'three.js',
-  '@babylonjs/core': 'Babylon.js',
-  kaboom: 'Kaboom',
-  kaplay: 'KAPLAY',
-  excalibur: 'Excalibur',
-  'melonjs': 'melonJS',
-  'playcanvas': 'PlayCanvas',
-};
 
 export interface PackageInfo {
   name: string;
@@ -43,30 +33,12 @@ export interface PackageInfo {
 }
 
 export function readPackage(root: string): PackageInfo {
-  const file = path.join(root, 'package.json');
+  const file = resolveInside(root, 'package.json');
   if (!existsSync(file)) {
-    throw new GameDNAError('UNSUPPORTED_ENGINE', 'No package.json in the project folder', { fix: 'Point projectPath at a JavaScript/TypeScript game folder.' });
+    throw new GameDNAError('NOT_FOUND', 'No package.json in the project folder', { fix: 'npm scripts need a package.json; native engines declare commands with argv instead.' });
   }
   const pkg = JSON.parse(readFileSync(file, 'utf8')) as { name?: string; scripts?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
   return { name: pkg.name ?? path.basename(root), scripts: pkg.scripts ?? {}, deps: { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) } };
-}
-
-export function detectEngine(root: string, pkg: PackageInfo): { id: 'phaser'; version: string; declared: string } {
-  if (!pkg.deps['phaser']) {
-    const other = Object.keys(OTHER_ENGINES).find((d) => pkg.deps[d]);
-    throw new GameDNAError('UNSUPPORTED_ENGINE', other ? `Detected ${OTHER_ENGINES[other]}; GameDNA v0.1 supports Phaser only` : 'No Phaser dependency found', {
-      details: { detected: other ? OTHER_ENGINES[other] : null },
-      fix: 'GameDNA v0.1 supports Phaser 3 projects. Add "phaser" to package.json, or use a supported project.',
-    });
-  }
-  let version = 'unresolved';
-  try {
-    const req = createRequire(path.join(root, 'package.json'));
-    version = (JSON.parse(readFileSync(req.resolve('phaser/package.json'), 'utf8')) as { version: string }).version;
-  } catch {
-    // Not installed yet; report the declared range only.
-  }
-  return { id: 'phaser', version, declared: pkg.deps['phaser'] as string };
 }
 
 export function detectPackageManager(root: string, stopAt: string): string {
@@ -95,6 +67,7 @@ export interface LoadedProject {
   relPath: string;
   record: ProjectRecord;
   tuning: ParameterValues;
+  engine: DetectedEngine;
 }
 
 export function loadRecord(root: string): ProjectRecord {

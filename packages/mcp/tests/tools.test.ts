@@ -1,9 +1,11 @@
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { closeAllHarnesses } from '../src/headless.js';
-import { createContext } from '../src/server.js';
+import { createContext, createServer } from '../src/server.js';
 import {
   compareExperiment,
   createExperimentTool,
@@ -48,6 +50,21 @@ const tuningPath = () => path.join(work, 'gravity-shift/src/game/tuning.json');
 const readTuning = () => JSON.parse(readFileSync(tuningPath(), 'utf8')) as Record<string, number | boolean>;
 const writeTuning = (t: Record<string, number | boolean>) => writeFileSync(tuningPath(), `${JSON.stringify(t, null, 2)}\n`);
 
+describe('MCP registration', () => {
+  it('lists all 17 tools with input schemas', async () => {
+    const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
+    await createServer(ctx).connect(serverSide);
+    const client = new Client({ name: 'gamedna-test', version: '0.1.0' });
+    await client.connect(clientSide);
+    const { tools } = await client.listTools();
+    await client.close();
+    expect(tools.map((t) => t.name).sort()).toEqual(
+      ['gd_compare_experiment', 'gd_configure_tool', 'gd_create_experiment', 'gd_export_report', 'gd_generate_asset', 'gd_get_selection', 'gd_get_style_pack', 'gd_install_adapter', 'gd_observe', 'gd_prepare_change', 'gd_project_status', 'gd_record_selection', 'gd_run_scenario', 'gd_start_session', 'gd_stop_session', 'gd_validate_design', 'gd_verify'].sort(),
+    );
+    for (const name of ['gd_install_adapter', 'gd_configure_tool']) expect(tools.find((t) => t.name === name)?.description).toMatch(/never edits game code/);
+  });
+});
+
 describe('project status and validation', () => {
   it('detects Phaser, the record, scenarios and the headless harness', () => {
     const r = projectStatus(ctx, { projectPath: rel }).data as Record<string, any>;
@@ -58,8 +75,8 @@ describe('project status and validation', () => {
     expect(r.record.headless).toMatch(/available/);
   });
 
-  it('returns UNSUPPORTED_ENGINE for a non-Phaser project', () => {
-    expect(() => projectStatus(ctx, { projectPath: path.relative(repo, path.join(work, 'not-a-game')) })).toThrow(/PixiJS/);
+  it('returns UNSUPPORTED_ENGINE for a folder with no supported engine', () => {
+    expect(() => projectStatus(ctx, { projectPath: path.relative(repo, path.join(work, 'not-a-game')) })).toThrow(/No supported engine/);
   });
 
   it('refuses paths outside the workspace', () => {
