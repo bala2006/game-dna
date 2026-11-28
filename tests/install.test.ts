@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -111,7 +111,7 @@ describe('install.mjs', () => {
     }
     for (const dir of ['packages', 'node_modules/three', 'node_modules/phaser']) {
       const src = path.join(repo, dir), dest = path.join(mirror, dir);
-      if (dir === 'packages') spawnSync('cp', ['-r', src, dest]);
+      if (dir === 'packages') cpSync(src, dest, { recursive: true });
       else { mkdirSync(dest, { recursive: true }); writeFileSync(path.join(dest, 'package.json'), readFileSync(path.join(src, 'package.json'))); }
     }
     const problems = validate(mirror, { compile: false }).problems;
